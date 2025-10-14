@@ -1,0 +1,449 @@
+// Ticket to Ride - Jogo Manager
+
+class JogoManager {
+    constructor(partidaId, jogadorId) {
+        this.partidaId = partidaId;
+        this.jogadorId = jogadorId;
+        this.app = window.ticketToRideApp;
+        this.estadoAtual = null;
+        this.rotaSelecionada = null;
+    }
+
+    async atualizarEstado() {
+        try {
+            this.estadoAtual = await this.app.makeApiCall(`/api/partida/${this.partidaId}`);
+            this.atualizarInterface();
+            
+            // Atualizar status da navbar
+            if (this.estadoAtual.turnoAtual) {
+                const status = `Turno ${this.estadoAtual.turnoAtual.numero} - ${this.estadoAtual.turnoAtual.jogadorNome}`;
+                console.log('Atualizando status da navbar:', status);
+                this.app.updateGameStatus(status);
+            } else {
+                console.log('Atualizando status da navbar: Partida em andamento');
+                this.app.updateGameStatus('Partida em andamento');
+            }
+
+        } catch (error) {
+            console.error('Erro ao atualizar estado:', error);
+            this.app.showNotification(`Erro ao atualizar estado: ${error.message}`, 'danger');
+        }
+    }
+
+    async atualizarJogo() {
+        await this.atualizarEstado();
+    }
+
+    async passarTurno() {
+        if (!this.estadoAtual || !this.estadoAtual.turnoAtual) {
+            this.app.showNotification('Nenhum turno ativo!', 'warning');
+            return;
+        }
+
+        const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
+        try {
+            console.log('Passando turno...', { partidaId: this.partidaId, jogadorId: jogadorAtual });
+            await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/passar`, 'POST', { jogadorId: jogadorAtual });
+            await this.atualizarEstado();
+            this.app.showNotification('Turno passado!', 'success');
+
+        } catch (error) {
+            console.error('Erro ao passar turno:', error);
+            this.app.showNotification(`Erro ao passar turno: ${error.message}`, 'danger');
+        }
+    }
+
+    atualizarInterface() {
+        this.atualizarTurnoAtual();
+        this.atualizarStatusJogadores();
+        this.atualizarRotasDisponiveis();
+        this.atualizarMinhasCartas();
+        this.atualizarMeusBilhetes();
+    }
+
+    atualizarTurnoAtual() {
+        const turnoElement = document.getElementById('current-turn');
+        if (!this.estadoAtual.turnoAtual) return;
+
+        const turno = this.estadoAtual.turnoAtual;
+        // Sempre mostrar que é a vez do jogador atual (não verificar se é "minha vez")
+        
+        turnoElement.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Turno ${turno.numero}</strong> - ${turno.jogadorNome}
+                    ${turno.acaoRealizada ? `<br><small>Ação: ${this.getAcaoNome(turno.acaoRealizada)}</small>` : ''}
+                </div>
+                <div>
+                    <span class="badge bg-success">Sua vez!</span>
+                </div>
+            </div>
+        `;
+    }
+
+    atualizarStatusJogadores() {
+        const statusElement = document.getElementById('players-status');
+        statusElement.innerHTML = '';
+
+        this.estadoAtual.jogadores.forEach(jogador => {
+            const jogadorElement = document.createElement('div');
+            jogadorElement.className = 'card mb-2';
+            jogadorElement.innerHTML = `
+                <div class="card-body p-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${jogador.nome}</strong>
+                            ${jogador.id === this.jogadorId ? '<small class="text-muted">(Você)</small>' : ''}
+                        </div>
+                        <div class="text-end">
+                            <div><strong>${jogador.pontuacao}</strong> pts</div>
+                            <small class="text-muted">${jogador.pecasTremRestante} trens</small>
+                        </div>
+                    </div>
+                    <div class="mt-1">
+                        <small class="text-muted">
+                            ${jogador.numeroRotas} rotas | ${jogador.numeroBilhetes} bilhetes | ${jogador.numeroCartas} cartas
+                        </small>
+                    </div>
+                </div>
+            `;
+            statusElement.appendChild(jogadorElement);
+        });
+    }
+
+    atualizarRotasDisponiveis() {
+        const rotasElement = document.getElementById('available-routes');
+        const rotasDisponiveis = this.estadoAtual.rotas.filter(r => r.estaDisponivel);
+        
+        if (rotasDisponiveis.length === 0) {
+            rotasElement.innerHTML = '<div class="alert alert-info">Nenhuma rota disponível</div>';
+            return;
+        }
+
+        let html = `
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Rota</th>
+                        <th>Cor</th>
+                        <th>Tamanho</th>
+                        <th>Pontos</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        rotasDisponiveis.forEach(rota => {
+            const podeReivindicar = this.podeReivindicarRota(rota);
+            html += `
+                <tr>
+                    <td>${rota.origem} → ${rota.destino}</td>
+                    <td><span class="badge" style="background-color: ${this.getCorHex(rota.cor)}">${this.getCorNome(rota.cor)}</span></td>
+                    <td>${rota.tamanho}</td>
+                    <td>${rota.pontos}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" 
+                                onclick="selecionarRota('${rota.id}')"
+                                ${!podeReivindicar ? 'disabled' : ''}>
+                            ${podeReivindicar ? 'Reivindicar' : 'Sem cartas'}
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        rotasElement.innerHTML = html;
+    }
+
+    atualizarMinhasCartas() {
+        const cartasElement = document.getElementById('my-cards');
+        if (!this.estadoAtual.turnoAtual) return;
+        
+        const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
+        const meuJogador = this.estadoAtual.jogadores.find(j => j.id === jogadorAtual);
+        
+        if (!meuJogador) return;
+
+        cartasElement.innerHTML = '';
+
+        // Agrupar cartas por cor
+        const cartasPorCor = {};
+        meuJogador.maoCartas.forEach(carta => {
+            if (!cartasPorCor[carta.cor]) {
+                cartasPorCor[carta.cor] = [];
+            }
+            cartasPorCor[carta.cor].push(carta);
+        });
+
+        Object.keys(cartasPorCor).forEach(cor => {
+            const cartas = cartasPorCor[cor];
+            const cartaElement = document.createElement('div');
+            cartaElement.className = 'card mb-2';
+            cartaElement.innerHTML = `
+                <div class="card-body p-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge" style="background-color: ${this.getCorHex(cor)}">${this.getCorNome(cor)}</span>
+                        <span class="badge bg-secondary">${cartas.length}</span>
+                    </div>
+                </div>
+            `;
+            cartasElement.appendChild(cartaElement);
+        });
+    }
+
+    atualizarMeusBilhetes() {
+        const bilhetesElement = document.getElementById('my-tickets');
+        if (!this.estadoAtual.turnoAtual) return;
+        
+        const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
+        const meuJogador = this.estadoAtual.jogadores.find(j => j.id === jogadorAtual);
+        
+        if (!meuJogador) return;
+
+        bilhetesElement.innerHTML = '';
+
+        meuJogador.bilhetesDestino.forEach(bilhete => {
+            const bilheteElement = document.createElement('div');
+            bilheteElement.className = 'card mb-2';
+            bilheteElement.innerHTML = `
+                <div class="card-body p-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${bilhete.origem} → ${bilhete.destino}</strong>
+                        </div>
+                        <span class="badge ${bilhete.isCompleto ? 'bg-success' : 'bg-warning'}">
+                            ${bilhete.pontos} pts
+                        </span>
+                    </div>
+                </div>
+            `;
+            bilhetesElement.appendChild(bilheteElement);
+        });
+    }
+
+    podeReivindicarRota(rota) {
+        if (!this.estadoAtual.turnoAtual) return false;
+        
+        const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
+        const meuJogador = this.estadoAtual.jogadores.find(j => j.id === jogadorAtual);
+        if (!meuJogador) return false;
+
+        // Verificar se tem cartas suficientes da cor correta
+        const cartasCor = meuJogador.maoCartas.filter(c => 
+            c.cor === rota.cor || c.ehLocomotiva
+        );
+
+        return cartasCor.length >= rota.tamanho;
+    }
+
+    async comprarCartas() {
+        if (!this.estadoAtual.turnoAtual) {
+            this.app.showNotification('Nenhum turno ativo!', 'warning');
+            return;
+        }
+
+        const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
+        try {
+            await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/comprar-cartas`, 'POST', { jogadorId: jogadorAtual });
+            await this.atualizarEstado();
+            this.app.showNotification('Cartas compradas com sucesso!', 'success');
+
+        } catch (error) {
+            console.error('Erro ao comprar cartas:', error);
+            this.app.showNotification(`Erro ao comprar cartas: ${error.message}`, 'danger');
+        }
+    }
+
+    selecionarRota(rotaId) {
+        this.rotaSelecionada = rotaId;
+        // Por simplicidade, vamos reivindicar a rota diretamente
+        this.reivindicarRota();
+    }
+
+    async reivindicarRota() {
+        if (!this.estadoAtual.turnoAtual) {
+            this.app.showNotification('Nenhum turno ativo!', 'warning');
+            return;
+        }
+
+        if (!this.rotaSelecionada) {
+            // Selecionar automaticamente a primeira rota disponível
+            const rotasDisponiveis = this.estadoAtual.rotas.filter(r => r.estaDisponivel);
+            if (rotasDisponiveis.length === 0) {
+                this.app.showNotification('Não há rotas disponíveis', 'warning');
+                return;
+            }
+            this.rotaSelecionada = rotasDisponiveis[0].id;
+        }
+
+        const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
+        try {
+            await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/reivindicar-rota`, 'POST', { 
+                jogadorId: jogadorAtual,
+                rotaId: this.rotaSelecionada
+            });
+
+            this.rotaSelecionada = null;
+            await this.atualizarEstado();
+            this.app.showNotification('Rota reivindicada com sucesso!', 'success');
+
+        } catch (error) {
+            console.error('Erro ao reivindicar rota:', error);
+            this.app.showNotification(`Erro ao reivindicar rota: ${error.message}`, 'danger');
+        }
+    }
+
+    async comprarBilhetes() {
+        if (!this.estadoAtual.turnoAtual) {
+            this.app.showNotification('Nenhum turno ativo!', 'warning');
+            return;
+        }
+
+        const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
+        // Por simplicidade, vamos comprar bilhetes sem seleção
+        try {
+            await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/comprar-bilhetes`, 'POST', { 
+                jogadorId: jogadorAtual,
+                bilhetesSelecionados: [] // Será selecionado automaticamente
+            });
+
+            await this.atualizarEstado();
+            this.app.showNotification('Bilhetes comprados com sucesso!', 'success');
+
+        } catch (error) {
+            console.error('Erro ao comprar bilhetes:', error);
+            this.app.showNotification(`Erro ao comprar bilhetes: ${error.message}`, 'danger');
+        }
+    }
+
+    async finalizarPartida() {
+        try {
+            const partida = await this.app.makeApiCall(`/api/partida/${this.partidaId}/finalizar`, 'POST');
+            this.mostrarResultado(partida);
+
+        } catch (error) {
+            console.error('Erro ao finalizar partida:', error);
+            this.app.showNotification(`Erro ao finalizar partida: ${error.message}`, 'danger');
+        }
+    }
+
+    mostrarResultado(partida) {
+        const ranking = partida.jogadores.sort((a, b) => b.pontuacao - a.pontuacao);
+        
+        const resultadoElement = document.getElementById('final-ranking');
+        let html = '<h4>Ranking Final</h4><div class="list-group">';
+        
+        ranking.forEach((jogador, index) => {
+            const posicao = index + 1;
+            const medalha = posicao === 1 ? '🥇' : posicao === 2 ? '🥈' : posicao === 3 ? '🥉' : '';
+            
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${posicao}º ${medalha} ${jogador.nome}</strong>
+                        ${jogador.id === this.jogadorId ? '<small class="text-muted">(Você)</small>' : ''}
+                    </div>
+                    <span class="badge bg-primary rounded-pill">${jogador.pontuacao} pontos</span>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        resultadoElement.innerHTML = html;
+        
+        this.app.showScreen('result-screen');
+        this.app.updateGameStatus('Partida finalizada');
+    }
+
+    getAcaoNome(acao) {
+        const acoes = {
+            'REIVINDICAR_ROTA': 'Reivindicar Rota',
+            'COMPRAR_BILHETES_DESTINO': 'Comprar Bilhetes',
+            'COMPRAR_CARTAS_VEICULO': 'Comprar Cartas'
+        };
+        return acoes[acao] || acao;
+    }
+
+    getCorHex(cor) {
+        const cores = {
+            'VERMELHO': '#dc3545',
+            'AZUL': '#0d6efd',
+            'VERDE': '#198754',
+            'AMARELO': '#ffc107',
+            'PRETO': '#212529',
+            'BRANCO': '#f8f9fa',
+            'LARANJA': '#fd7e14',
+            'ROSA': '#e83e8c',
+            'CINZA': '#6c757d',
+            'LOCOMOTIVA': '#6f42c1'
+        };
+        return cores[cor] || '#6c757d';
+    }
+
+    getCorNome(corNumero) {
+        const cores = {
+            0: 'Vermelho',
+            1: 'Azul', 
+            2: 'Verde',
+            3: 'Amarelo',
+            4: 'Preto',
+            5: 'Branco',
+            6: 'Laranja',
+            7: 'Rosa',
+            8: 'Cinza',
+            9: 'Locomotiva'
+        };
+        return cores[corNumero] || 'Desconhecida';
+    }
+}
+
+// Global functions for HTML onclick events
+function atualizarEstado() {
+    if (window.jogoManager) {
+        window.jogoManager.atualizarEstado();
+    }
+}
+
+function atualizarJogo() {
+    if (window.jogoManager) {
+        window.jogoManager.atualizarJogo();
+    }
+}
+
+function finalizarPartida() {
+    if (window.jogoManager) {
+        window.jogoManager.finalizarPartida();
+    }
+}
+
+function comprarCartas() {
+    if (window.jogoManager) {
+        window.jogoManager.comprarCartas();
+    }
+}
+
+function reivindicarRota() {
+    if (window.jogoManager) {
+        window.jogoManager.reivindicarRota();
+    }
+}
+
+function comprarBilhetes() {
+    if (window.jogoManager) {
+        window.jogoManager.comprarBilhetes();
+    }
+}
+
+function selecionarRota(rotaId) {
+    if (window.jogoManager) {
+        window.jogoManager.selecionarRota(rotaId);
+    }
+}
+
+function passarTurno() {
+    if (window.jogoManager) {
+        window.jogoManager.passarTurno();
+    }
+}
