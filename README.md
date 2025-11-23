@@ -95,7 +95,7 @@ TicketToRide Project/
 
 1. **Navegue até o diretório do projeto:**
    ```bash
-   cd "C:\Users\Hug_d\Documents\TicketToRide Project"
+   cd "...\TicketToRide Project"
    ```
 
 2. **Execute o projeto:**
