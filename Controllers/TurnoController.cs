@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using TicketToRide.Application.Services;
 using TicketToRide.Application.DTOs;
+using TicketToRide.Application.Services;
 
 namespace TicketToRide.Controllers
 {
@@ -20,7 +20,7 @@ namespace TicketToRide.Controllers
         {
             try
             {
-                var turno = _turnoService.ObterTurnoAtual(partidaId);
+                TurnoDTO turno = _turnoService.ObterTurnoAtual(partidaId);
                 return Ok(turno);
             }
             catch (ArgumentException ex)
@@ -38,7 +38,7 @@ namespace TicketToRide.Controllers
         {
             try
             {
-                var turno = _turnoService.ComprarCartasVeiculo(partidaId, request.JogadorId, request.IndicesCartasVisiveis);
+                TurnoDTO turno = _turnoService.ComprarCartasVeiculo(partidaId, request.JogadorId, request.IndicesCartasVisiveis);
                 return Ok(turno);
             }
             catch (ArgumentException ex)
@@ -56,7 +56,7 @@ namespace TicketToRide.Controllers
         {
             try
             {
-                var turno = _turnoService.ReivindicarRota(partidaId, request.JogadorId, request.RotaId);
+                TurnoDTO turno = _turnoService.ReivindicarRota(partidaId, request.JogadorId, request.RotaId);
                 return Ok(turno);
             }
             catch (ArgumentException ex)
@@ -74,43 +74,7 @@ namespace TicketToRide.Controllers
         {
             try
             {
-                var turno = _turnoService.ComprarBilhetesDestino(partidaId, request.JogadorId, request.BilhetesSelecionados);
-                return Ok(turno);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-        [HttpPost("partida/{partidaId}/turno/proximo")]
-        public ActionResult<TurnoDTO> ProximoTurno(string partidaId)
-        {
-            try
-            {
-                var turno = _turnoService.ProximoTurno(partidaId);
-                return Ok(turno);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-        [HttpPost("partida/{partidaId}/turno/passar")]
-        public ActionResult<TurnoDTO> PassarTurno(string partidaId, [FromBody] PassarTurnoRequest request)
-        {
-            try
-            {
-                var turno = _turnoService.PassarTurno(partidaId, request.JogadorId);
+                TurnoDTO turno = _turnoService.ComprarBilhetesDestino(partidaId, request.JogadorId, request.BilhetesSelecionados);
                 return Ok(turno);
             }
             catch (ArgumentException ex)
@@ -139,7 +103,7 @@ namespace TicketToRide.Controllers
     public class ComprarBilhetesRequest
     {
         public string JogadorId { get; set; } = string.Empty;
-        public List<string> BilhetesSelecionados { get; set; } = new();
+        public List<string> BilhetesSelecionados { get; set; } = [];
     }
 
     public class PassarTurnoRequest

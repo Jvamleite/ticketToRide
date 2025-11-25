@@ -11,8 +11,8 @@ namespace TicketToRide.Domain.Entities
         public Cidade Destino { get; }
         public Cor Cor { get; }
         public int Tamanho { get; }
-        private bool Dupla { get; }
-        public bool Disponivel { get; } = true;
+        public bool Dupla { get; }
+        public bool Disponivel { get; private set; } = true;
 
         public Rota(string id, Cidade origem, Cidade destino, Cor cor, int tamanho, bool ehDupla = false)
         {
@@ -56,6 +56,11 @@ namespace TicketToRide.Domain.Entities
                 EstaDisponivel = Disponivel,
                 Pontos = CalcularPontos()
             };
+        }
+
+        public void ConquistarRota()
+        {
+            Disponivel = false;
         }
     }
 }

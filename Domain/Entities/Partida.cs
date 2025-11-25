@@ -1,4 +1,5 @@
 using TicketToRide.Application.DTOs;
+using TicketToRide.Domain.Enums;
 
 namespace TicketToRide.Domain.Entities
 {
@@ -176,6 +177,12 @@ namespace TicketToRide.Domain.Entities
                 NumeroJogadores = Jogadores.Count,
                 PodeIniciar = PodeIniciar()
             };
+        }
+
+        public void ExecutarAcaoTurno(Acao acaoRealizada)
+        {
+            TurnoAtual?.SalvarAcaoRealizada(acaoRealizada);
+            AvancarTurno();
         }
     }
 }

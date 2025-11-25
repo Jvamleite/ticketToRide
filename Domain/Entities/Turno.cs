@@ -16,7 +16,7 @@ namespace TicketToRide.Domain.Entities
             JogadorAtual = jogadorAtual;
         }
 
-        public void ExecutarAcao(Acao acao)
+        public void SalvarAcaoRealizada(Acao acao)
         {
             AcaoRealizada = acao;
         }

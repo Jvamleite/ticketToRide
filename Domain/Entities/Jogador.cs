@@ -5,7 +5,6 @@ namespace TicketToRide.Domain.Entities
 {
     public class Jogador
     {
-        private const int LIMITE_MAXIMO_CARTAS_MAO = 10;
         public string Id { get; }
         public string Nome { get; }
         public int Pontuacao { get; private set; } = 0;
@@ -27,6 +26,8 @@ namespace TicketToRide.Domain.Entities
             RotasConquistadas.Add(rota);
 
             RemoverPecasTrem(rota.Tamanho);
+
+            rota.ConquistarRota();
         }
 
         public bool TemPecasSuficientesParaConquistarRota(Rota rota)
@@ -76,7 +77,7 @@ namespace TicketToRide.Domain.Entities
             BilhetesDestino.AddRange(bilhetes);
         }
 
-        public List<CartaVeiculo> ObterCartasParaCor(Cor cor)
+        private List<CartaVeiculo> ObterCartasParaCor(Cor cor)
         {
             return [.. MaoCartas.Where(c => c.PodeSerUsadaPara(cor))];
         }
@@ -101,11 +102,6 @@ namespace TicketToRide.Domain.Entities
             }
 
             return cartasSelecionadas;
-        }
-
-        public bool PodeComprarCartas()
-        {
-            return MaoCartas.Count < LIMITE_MAXIMO_CARTAS_MAO;
         }
 
         public void AdicionarPontuacao(int pontos)

@@ -45,11 +45,6 @@ namespace TicketToRide.Application.Services
             }
 
             Jogador? jogador = partida.ObterJogador(jogadorId) ?? throw new ArgumentException("Jogador não encontrado");
-            if (!jogador.PodeComprarCartas())
-            {
-                throw new InvalidOperationException("Jogador já tem o máximo de cartas (10)");
-            }
-
             List<CartaVeiculo> cartasCompradas = [];
 
             if (indicesCartasVisiveis?.Any() == true)
@@ -69,7 +64,7 @@ namespace TicketToRide.Application.Services
             }
 
             jogador.AdiconarCartasVeiculo(cartasCompradas);
-            partida.TurnoAtual.ExecutarAcao(Acao.COMPRAR_CARTAS_VEICULO);
+            partida.ExecutarAcaoTurno(Acao.COMPRAR_CARTAS_VEICULO);
 
             _partidaRepository.SalvarPartida(partida);
             return partida.TurnoAtual.MapearParaDTO();
@@ -77,12 +72,7 @@ namespace TicketToRide.Application.Services
 
         public TurnoDTO ReivindicarRota(string partidaId, string jogadorId, string rotaId)
         {
-            Partida? partida = _partidaRepository.ObterPartida(partidaId);
-            if (partida == null)
-            {
-                throw new ArgumentException("Partida não encontrada");
-            }
-
+            Partida? partida = _partidaRepository.ObterPartida(partidaId) ?? throw new ArgumentException("Partida não encontrada");
             if (!partida.Iniciada)
             {
                 throw new InvalidOperationException("Partida não foi iniciada");
@@ -114,7 +104,7 @@ namespace TicketToRide.Application.Services
 
             jogador.ConquistarRota(rota);
 
-            partida.TurnoAtual.ExecutarAcao(Acao.REIVINDICAR_ROTA);
+            partida.ExecutarAcaoTurno(Acao.REIVINDICAR_ROTA);
 
             _eventDispatcher.Publish(new RotaReivindicadaEvent(
                 IdPartida: partida.Id,
@@ -159,54 +149,10 @@ namespace TicketToRide.Application.Services
             List<BilheteDestino> bilhetesParaDevolver = bilhetesComprados.Except(bilhetesParaManter).ToList();
             partida.BaralhoCartasDestino.Descartar(bilhetesParaDevolver);
 
-            partida.TurnoAtual.ExecutarAcao(Acao.COMPRAR_BILHETES_DESTINO);
+            partida.ExecutarAcaoTurno(Acao.COMPRAR_BILHETES_DESTINO);
 
             _partidaRepository.SalvarPartida(partida);
             return partida.TurnoAtual.MapearParaDTO();
-        }
-
-        public TurnoDTO ProximoTurno(string partidaId)
-        {
-            Partida? partida = _partidaRepository.ObterPartida(partidaId) ?? throw new ArgumentException("Partida não encontrada");
-            if (!partida.Iniciada)
-            {
-                throw new InvalidOperationException("Partida não foi iniciada");
-            }
-
-            if (partida.TurnoAtual == null || !partida.TurnoAtual.AcaoCompletada)
-            {
-                throw new InvalidOperationException("Turno atual não foi completado");
-            }
-
-            Turno proximoTurno = partida.AvancarTurno();
-            _partidaRepository.SalvarPartida(partida);
-
-            return proximoTurno.MapearParaDTO();
-        }
-
-        public TurnoDTO PassarTurno(string partidaId, string jogadorId)
-        {
-            Partida? partida = _partidaRepository.ObterPartida(partidaId);
-            if (partida == null)
-            {
-                throw new ArgumentException("Partida não encontrada");
-            }
-
-            if (!partida.Iniciada)
-            {
-                throw new InvalidOperationException("Partida não foi iniciada");
-            }
-
-            if (partida.TurnoAtual == null || partida.TurnoAtual.ObterJogadorAtual().Id != jogadorId)
-            {
-                throw new InvalidOperationException("Não é o turno do jogador");
-            }
-
-            partida.TurnoAtual.ExecutarAcao(Acao.COMPRAR_CARTAS_VEICULO); // Ação padrão para passar turno
-            Turno proximoTurno = partida.AvancarTurno();
-            _partidaRepository.SalvarPartida(partida);
-
-            return proximoTurno.MapearParaDTO();
         }
     }
 }

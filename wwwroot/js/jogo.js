@@ -32,30 +32,13 @@ class JogoManager {
         await this.atualizarEstado();
     }
 
-    async passarTurno() {
-        if (!this.estadoAtual || !this.estadoAtual.turnoAtual) {
-            this.app.showNotification('Nenhum turno ativo!', 'warning');
-            return;
-        }
-
-        const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
-        try {
-            console.log('Passando turno...', { partidaId: this.partidaId, jogadorId: jogadorAtual });
-            await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/passar`, 'POST', { jogadorId: jogadorAtual });
-            await this.atualizarEstado();
-            this.app.showNotification('Turno passado!', 'success');
-        } catch (error) {
-            console.error('Erro ao passar turno:', error);
-            this.app.showNotification(`Erro ao passar turno: ${error.message}`, 'danger');
-        }
-    }
-
     atualizarInterface() {
         this.atualizarTurnoAtual();
         this.atualizarStatusJogadores();
         this.atualizarRotasDisponiveis();
         this.atualizarMinhasCartas();
         this.atualizarMeusBilhetes();
+        this.atualizarMinhasRotas();
     }
 
     atualizarTurnoAtual() {
@@ -179,7 +162,7 @@ class JogoManager {
             cartaElement.innerHTML = `
                 <div class="card-body p-2">
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="badge" style="background-color: ${this.getCorHex(cor)}">${this.getCorNome(cor)}</span>
+                        <span class="badge" style="background-color: ${this.getCorHex(cor)}; color: ${this.getCorTextoConformeBackground(cor)}">${this.getCorNome(cor)}</span>
                         <span class="badge bg-secondary">${cartas.length}</span>
                     </div>
                 </div>
@@ -218,6 +201,36 @@ class JogoManager {
         });
     }
 
+    atualizarMinhasRotas() {
+        const rotasElement = document.getElementById('my-routes');
+        if (!this.estadoAtual.turnoAtual) return;
+
+        const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
+        const meuJogador = this.estadoAtual.jogadores.find(j => j.id === jogadorAtual);
+
+        if (!meuJogador) return;
+
+        rotasElement.innerHTML = '';
+
+        meuJogador.rotasConquistadas.forEach(rota => {
+            const rotaElement = document.createElement('div');
+            rotaElement.className = 'card mb-2';
+            rotaElement.innerHTML = `
+                 <div class="card-body p-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${rota.origem} → ${rota.destino}</strong>
+                        </div>
+                        <span">
+                            ${rota.pontos} pts
+                        </span>
+                    </div>
+                </div>
+            `;
+            rotasElement.appendChild(rotaElement);
+        });
+    }
+
     podeReivindicarRota(rota) {
         if (!this.estadoAtual.turnoAtual) return false;
 
@@ -225,9 +238,8 @@ class JogoManager {
         const meuJogador = this.estadoAtual.jogadores.find(j => j.id === jogadorAtual);
         if (!meuJogador) return false;
 
-        // Verificar se tem cartas suficientes da cor correta
         const cartasCor = meuJogador.maoCartas.filter(c =>
-            c.cor === rota.cor || c.ehLocomotiva
+            c.cor === rota.cor || c.cor === "LOCOMOTIVA"
         );
 
         return cartasCor.length >= rota.tamanho;
@@ -435,11 +447,5 @@ function comprarBilhetes() {
 function selecionarRota(rotaId) {
     if (window.jogoManager) {
         window.jogoManager.selecionarRota(rotaId);
-    }
-}
-
-function passarTurno() {
-    if (window.jogoManager) {
-        window.jogoManager.passarTurno();
     }
 }

@@ -75,9 +75,6 @@
                             <button class="btn btn-info btn-sm" onclick="atualizarEstado()">
                                 <i class="fas fa-sync"></i> Atualizar
                             </button>
-                            <button class="btn btn-success btn-sm" onclick="passarTurno()">
-                                <i class="fas fa-forward"></i> Passar Turno
-                            </button>
                             <button class="btn btn-secondary btn-sm" onclick="novaPartida()">
                                 <i class="fas fa-plus"></i> Nova Partida
                             </button>
@@ -93,8 +90,6 @@
                                 <div id="current-turn" class="alert alert-primary">
                                     <!-- Informações do turno atual -->
                                 </div>
-                                
-                                <h5>Ações Disponíveis</h5>
                                 <div class="btn-group mb-3" role="group">
                                     <button class="btn btn-outline-primary" onclick="comprarCartas()">
                                         <i class="fas fa-shopping-cart"></i> Comprar Cartas
@@ -105,12 +100,9 @@
                                     <button class="btn btn-outline-warning" onclick="comprarBilhetes()">
                                         <i class="fas fa-ticket-alt"></i> Comprar Bilhetes
                                     </button>
-                                    <button class="btn btn-outline-info" onclick="passarTurno()">
-                                        <i class="fas fa-forward"></i> Passar Turno
-                                    </button>
                                 </div>
 
-                                <h5>Rotas Disponíveis</h5>
+                                <h5>Rotas</h5>
                                 <div id="available-routes" class="table-responsive">
                                     <!-- Tabela de rotas disponíveis -->
                                 </div>
@@ -120,15 +112,19 @@
                                 <div id="players-status">
                                     <!-- Status dos jogadores -->
                                 </div>
-                                
+
                                 <h5 class="mt-4">Minhas Cartas</h5>
                                 <div id="my-cards">
                                     <!-- Cartas do jogador atual -->
                                 </div>
-                                
+
                                 <h5 class="mt-4">Meus Bilhetes</h5>
                                 <div id="my-tickets">
                                     <!-- Bilhetes do jogador atual -->
+                                </div>
+                                <h5 class="mt-4">Minhas Rotas</h5>
+                                <div id="my-routes">
+                                    <!-- Rotas do jogador atual -->
                                 </div>
                             </div>
                         </div>

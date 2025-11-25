@@ -23,7 +23,7 @@ namespace TicketToRide.Domain.Entities
             return Cor.GetEnumDescription();
         }
 
-        public CartaVeiculoDTO MapearParaDTO()
+        public new CartaVeiculoDTO MapearParaDTO()
         {
             return new CartaVeiculoDTO
             {
