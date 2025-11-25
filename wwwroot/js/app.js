@@ -127,13 +127,24 @@ class TicketToRideApp {
             const response = await fetch(`${this.apiBaseUrl}${endpoint}`, options);
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                let detalhes;
+
+                try {
+                    const errorData = await response.json();
+                    detalhes = errorData.message
+                        || errorData.error
+                        || JSON.stringify(errorData);
+                } catch {
+                    detalhes = await response.text();
+                }
+
+                throw new Error(detalhes);
             }
 
             return await response.json();
+
         } catch (error) {
             console.error('API call failed:', error);
-            this.showNotification(`Erro na comunicação com o servidor: ${error.message}`, 'danger');
             throw error;
         }
     }
