@@ -9,6 +9,47 @@ class JogoManager {
         this.rotaSelecionada = null;
     }
 
+    mostrarModalPrimeiroTurno(jogadorId) {
+        const turno = this.estadoAtual.turnoAtual;
+
+        const modal = document.getElementById("modal-primeiro-turno");
+        const container = document.getElementById("modal-ticket-options");
+        modal.style.display = "flex";
+
+        container.innerHTML = "";
+        this.bilhetesSelecionados = [];
+
+        this.estadoAtual.opcoesBilheteDestino.forEach((b, index) => {
+            const el = document.createElement("div");
+            el.className = "card mb-2 ticket-option";
+            el.dataset.index = index;
+            el.innerHTML = `<div class="card-body p-2">
+                            <div class="d-flex justify-content-between">
+                                <strong>${b.origem} → ${b.destino}</strong>
+                                <span class="badge bg-primary">${b.pontos} pts</span>
+                            </div>
+                        </div>`;
+            el.addEventListener("click", () => this.toggleBilhete(index, el));
+            container.appendChild(el);
+        });
+
+        const btn = document.getElementById("confirmar-modal-tickets");
+        btn.onclick = async () => {
+            if (this.bilhetesSelecionados.length < 2) {
+                this.app.showNotification("Você deve selecionar pelo menos 2 bilhetes!", "warning");
+                return;
+            }
+
+            try {
+                await this.comprarBilhetes(true);
+                modal.style.display = "none";
+                this.app.primeiroTurnoFeito.add(turno.jogadorId);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+    }
+
     async atualizarEstado() {
         try {
             this.estadoAtual = await this.app.makeApiCall(`/api/partida/${this.partidaId}`);
@@ -40,6 +81,13 @@ class JogoManager {
         this.atualizarMeusBilhetes();
         this.atualizarMinhasRotas();
         this.atualizarCartasVisiveis();
+        this.atualizarBilhetesVisiveis();
+
+        const turno = this.estadoAtual.turnoAtual;
+        if (turno && !this.app.primeiroTurnoFeito.has(turno.jogadorId))
+        {
+            this.mostrarModalPrimeiroTurno(this.jogadorId);
+        }
     }
 
     atualizarTurnoAtual() {
@@ -256,6 +304,15 @@ class JogoManager {
         });
     }
 
+    atualizarBilhetesVisiveis() {
+        const container = document.getElementById("ticket-options");
+        if (!container) return;
+
+        container.innerHTML = "";
+
+        this.bilhetesSelecionados = [];
+    }
+
     toggleCartaVisivel(index, element) {
         const selecionada = this.cartasVisiveisSelecionadas.includes(index);
 
@@ -337,17 +394,24 @@ class JogoManager {
         }
     }
 
-    async comprarBilhetes() {
+    async comprarBilhetes(primeiroTurno) {
         if (!this.estadoAtual.turnoAtual) {
             this.app.showNotification('Nenhum turno ativo!', 'warning');
             return;
         }
 
         const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
+        const selecionados = [...document.querySelectorAll(".ticket-option.selected-ticket")];
+        if (selecionados.length === 0) {
+            this.app.showNotification("Selecione pelo menos 1 bilhete!", "warning");
+            return;
+        }
+
         try {
             await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/comprar-bilhetes`, 'POST', {
                 jogadorId: jogadorAtual,
-                bilhetesSelecionados: []
+                bilhetesSelecionados: selecionados.map(el => parseInt(el.dataset.index)),
+                primeiroTurno: primeiroTurno
             });
 
             await this.atualizarEstado();
@@ -355,6 +419,59 @@ class JogoManager {
         } catch (error) {
             console.error('Erro ao comprar bilhetes:', error);
             this.app.showNotification(`Erro ao comprar bilhetes: ${error.message}`, 'danger');
+        }
+    }
+
+    mostrarBilhetesParaEscolha() {
+        const container = document.getElementById("ticket-options");
+        container.innerHTML = "";
+        this.bilhetesSelecionados = [];
+
+        this.estadoAtual.opcoesBilheteDestino.forEach((b, index) => {
+            const el = document.createElement("div");
+            el.className = "card mb-2 ticket-option";
+            el.dataset.index = index;
+
+            el.innerHTML = `
+            <div class="card-body p-2">
+                <div class="d-flex justify-content-between">
+                    <strong>${b.origem} → ${b.destino}</strong>
+                    <span class="badge bg-primary">${b.pontos} pts</span>
+                </div>
+            </div>
+        `;
+
+            el.addEventListener("click", () => this.toggleBilhete(index, el));
+
+            container.appendChild(el);
+        });
+
+        const btn = document.createElement("button");
+        btn.className = "btn btn-success mt-2";
+        btn.textContent = "Confirmar Seleção";
+        btn.addEventListener("click", () => {
+            if (typeof this.comprarBilhetes === "function") {
+                this.comprarBilhetes();
+            } else if (typeof window.comprarBilhetes === "function") {
+                window.comprarBilhetes();
+            } else {
+                console.warn("comprarBilhetes não encontrada");
+            }
+        });
+
+        container.appendChild(btn);
+    }
+
+    toggleBilhete(index, element) {
+        const selecionado = this.bilhetesSelecionados.includes(index);
+
+        if (selecionado) {
+            this.bilhetesSelecionados =
+                this.bilhetesSelecionados.filter(i => i !== index);
+            element.classList.remove("selected-ticket");
+        } else {
+            this.bilhetesSelecionados.push(index);
+            element.classList.add("selected-ticket");
         }
     }
 
@@ -479,6 +596,12 @@ function reivindicarRota() {
 function comprarBilhetes() {
     if (window.jogoManager) {
         window.jogoManager.comprarBilhetes();
+    }
+}
+
+function mostrarBilhetesParaEscolha() {
+    if (window.jogoManager) {
+        window.jogoManager.mostrarBilhetesParaEscolha();
     }
 }
 

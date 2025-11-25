@@ -7,6 +7,7 @@ namespace TicketToRide.Domain.Entities
         public Cidade Origem { get; }
         public Cidade Destino { get; }
         public int Pontos { get; }
+        private bool IsCompleto { get; set; }
 
         public BilheteDestino(Cidade origem, Cidade destino, int pontos) : base($"{origem.ObterNomeFormatado(destino)}")
         {
@@ -15,22 +16,25 @@ namespace TicketToRide.Domain.Entities
             Pontos = pontos;
         }
 
-        public bool EstaCompleto(IEnumerable<Rota> rotasJogador)
+        public bool EstaCompleto()
         {
-            return ExisteCaminho(Origem, Destino, rotasJogador);
+            return IsCompleto;
         }
 
-        private static bool ExisteCaminho(Cidade origem, Cidade destino, IEnumerable<Rota> rotas)
+        public void AtualizarBilhete(IEnumerable<Rota> rotasJogador)
         {
-            if (origem.Equals(destino))
+            if (ExisteCaminho(rotasJogador))
             {
-                return true;
+                IsCompleto = true;
             }
+        }
 
+        private bool ExisteCaminho(IEnumerable<Rota> rotas)
+        {
             HashSet<Cidade> visitadas = [];
             Queue<Cidade> fila = new();
-            fila.Enqueue(origem);
-            visitadas.Add(origem);
+            fila.Enqueue(Origem);
+            visitadas.Add(Origem);
 
             while (fila.Count > 0)
             {
@@ -51,7 +55,7 @@ namespace TicketToRide.Domain.Entities
 
                     if (proximaCidade != null && !visitadas.Contains(proximaCidade))
                     {
-                        if (proximaCidade.Equals(destino))
+                        if (proximaCidade.Equals(Destino))
                         {
                             return true;
                         }

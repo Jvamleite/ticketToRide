@@ -28,7 +28,14 @@
             </div>
         </div>
     </nav>
-
+    <div id="modal-primeiro-turno" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <h5>Escolha obrigatória de bilhetes destino</h5>
+            <p>Você deve escolher pelo menos 2 bilhetes antes de começar a jogar.</p>
+            <div id="modal-ticket-options"></div>
+            <button id="confirmar-modal-tickets" class="btn btn-success mt-2">Confirmar Seleção</button>
+        </div>
+    </div>
     <main class="container mt-4">
         <!-- Tela de Configuração -->
         <div id="setup-screen" class="row">
@@ -97,13 +104,14 @@
                                     <button class="btn btn-outline-primary" onclick="comprarCartas()">
                                         <i class="fas fa-train"></i> Comprar Cartas Vagão
                                     </button>
-                                    <button class="btn btn-outline-warning" onclick="comprarBilhetes()">
+                                    <button class="btn btn-outline-warning" onclick="mostrarBilhetesParaEscolha()">
                                         <i class="fas fa-ticket-alt"></i> Comprar Bilhetes Destino
                                     </button>
                                 </div>
+                                <div id="ticket-options" class="mt-3"></div>
                                 <h5>Cartas Visíveis</h5>
                                 <div id="visible-cards" class="d-flex gap-2">
-                                    <!-- preenchido pelo JS -->
+                                    <!-- Cartas visiveis -->
                                 </div>
                                 <h5>Rotas Disponíveis</h5>
                                 <div id="available-routes" class="table-responsive">

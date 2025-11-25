@@ -1,9 +1,11 @@
 using TicketToRide.Application.DTOs;
 using TicketToRide.Domain.Enums;
+using TicketToRide.Domain.Interfaces;
+using TicketToRideAPI.Domain.Interfaces;
 
 namespace TicketToRide.Domain.Entities
 {
-    public class Jogador
+    public class Jogador : IJogadorSubject
     {
         public string Id { get; }
         public string Nome { get; }
@@ -12,6 +14,8 @@ namespace TicketToRide.Domain.Entities
         private List<CartaVeiculo> MaoCartas { get; } = [];
         public List<BilheteDestino> BilhetesDestino { get; } = [];
         public List<Rota> RotasConquistadas { get; } = [];
+
+        private List<IObserver> _observers = [];
 
         public Jogador(string id, string nome)
         {
@@ -28,6 +32,10 @@ namespace TicketToRide.Domain.Entities
             RemoverPecasTrem(rota.Tamanho);
 
             rota.ConquistarRota();
+
+            Pontuacao += rota.CalcularPontos();
+
+            this.Notify();
         }
 
         public bool TemPecasSuficientesParaConquistarRota(Rota rota)
@@ -124,6 +132,26 @@ namespace TicketToRide.Domain.Entities
                 NumeroBilhetes = BilhetesDestino.Count,
                 NumeroRotas = RotasConquistadas.Count
             };
+        }
+
+        public void Attach(IObserver observer)
+        {
+            Console.WriteLine($"Subject (Jogador {Nome}): Attached an observer.");
+            this._observers.Add(observer);
+        }
+
+        public void Detach(IObserver observer)
+        {
+            this._observers.Remove(observer);
+            Console.WriteLine($"Subject (Jogador {Nome}): Detached an observer.");
+        }
+
+        public void Notify()
+        {
+            foreach (IObserver observer in _observers)
+            {
+                observer.Update(this);
+            }
         }
     }
 }

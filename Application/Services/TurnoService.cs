@@ -2,22 +2,17 @@ using TicketToRide.Application.DTOs;
 using TicketToRide.Domain.Entities;
 using TicketToRide.Domain.Enums;
 using TicketToRide.Domain.Interfaces;
-using TicketToRideApi.Domain.Events;
-using TicketToRideApi.Domain.Interfaces;
 
 namespace TicketToRide.Application.Services
 {
     public class TurnoService
     {
         private readonly IPartidaRepository _partidaRepository;
-        private readonly IDomainEventDispatcher _eventDispatcher;
 
         public TurnoService(
-            IPartidaRepository partidaRepository,
-            IDomainEventDispatcher eventDispatcher)
+            IPartidaRepository partidaRepository)
         {
             _partidaRepository = partidaRepository;
-            _eventDispatcher = eventDispatcher;
         }
 
         public TurnoDTO ObterTurnoAtual(string partidaId)
@@ -106,18 +101,11 @@ namespace TicketToRide.Application.Services
 
             partida.ExecutarAcaoTurno(Acao.REIVINDICAR_ROTA);
 
-            _eventDispatcher.Publish(new RotaReivindicadaEvent(
-                IdPartida: partida.Id,
-                IdJogador: jogador.Id,
-                RotaReivindicada: rota,
-                OcorridoEm: DateTime.UtcNow
-            ));
-
             _partidaRepository.SalvarPartida(partida);
             return partida.TurnoAtual.MapearParaDTO();
         }
 
-        public TurnoDTO ComprarBilhetesDestino(string partidaId, string jogadorId, List<string> bilhetesSelecionados)
+        public TurnoDTO ComprarBilhetesDestino(string partidaId, string jogadorId, List<int> bilhetesSelecionados, bool primeiroTurno)
         {
             Partida? partida = _partidaRepository.ObterPartida(partidaId) ?? throw new ArgumentException("Partida não encontrada");
             if (!partida.EstaNaVezDoJogador(jogadorId))
@@ -126,29 +114,30 @@ namespace TicketToRide.Application.Services
             }
 
             Jogador? jogador = partida.ObterJogador(jogadorId) ?? throw new ArgumentException("Jogador não encontrado");
-            List<BilheteDestino> bilhetesComprados = partida.BaralhoCartasDestino.Comprar(3);
-
-            if (bilhetesComprados.Count == 0)
-            {
-                throw new InvalidOperationException("Não há bilhetes disponíveis no baralho");
-            }
+            List<BilheteDestino> bilhetesComprados = [];
 
             if (bilhetesSelecionados.Count == 0)
             {
                 throw new InvalidOperationException("Jogador deve manter pelo menos 1 bilhete");
             }
 
-            // Adicionar bilhetes selecionados à mão do jogador
-            List<BilheteDestino> bilhetesParaManter = bilhetesComprados.Where(b =>
-                bilhetesSelecionados.Contains($"{b.Origem.Nome}-{b.Destino.Nome}")).ToList();
+            foreach (int indice in bilhetesSelecionados)
+            {
+                BilheteDestino? carta = partida.BaralhoCartasDestino.ComprarCartaDestino(indice);
+                if (carta != null)
+                {
+                    bilhetesComprados.Add(carta);
+                }
+            }
 
-            jogador.AdicionarBilhetesDestino(bilhetesParaManter);
+            jogador.AdicionarBilhetesDestino(bilhetesComprados);
 
-            // Devolver bilhetes não selecionados ao baralho
-            List<BilheteDestino> bilhetesParaDevolver = bilhetesComprados.Except(bilhetesParaManter).ToList();
-            partida.BaralhoCartasDestino.Descartar(bilhetesParaDevolver);
+            partida.BaralhoCartasDestino.DescartarNaoEscolhidas(bilhetesSelecionados);
 
-            partida.ExecutarAcaoTurno(Acao.COMPRAR_BILHETES_DESTINO);
+            if (!primeiroTurno)
+            {
+                partida.ExecutarAcaoTurno(Acao.COMPRAR_BILHETES_DESTINO);
+            }
 
             _partidaRepository.SalvarPartida(partida);
             return partida.TurnoAtual.MapearParaDTO();

@@ -16,5 +16,6 @@ namespace TicketToRide.Application.DTOs
         public int NumeroJogadores { get; set; }
         public bool PodeIniciar { get; set; }
         public IEnumerable<CartaVeiculoDTO> CartasVisiveis { get; set; }
+        public IEnumerable<BilheteDestinoDTO> OpcoesBilheteDestino { get; set; }
     }
 }

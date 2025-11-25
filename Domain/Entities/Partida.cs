@@ -1,9 +1,11 @@
 using TicketToRide.Application.DTOs;
 using TicketToRide.Domain.Enums;
+using TicketToRide.Domain.Interfaces;
+using TicketToRideAPI.Domain.Interfaces;
 
 namespace TicketToRide.Domain.Entities
 {
-    public class Partida
+    public class Partida : IPartidaSubject
     {
         private const int MinimoJogadores = 2;
         private const int MaximoJogadores = 5;
@@ -16,6 +18,8 @@ namespace TicketToRide.Domain.Entities
         public Turno? TurnoAtual { get; private set; }
         public bool Iniciada { get; private set; }
         public bool Finalizada { get; private set; }
+
+        private List<IObserver> _observadores = [];
 
         public Partida(string id)
         {
@@ -50,6 +54,8 @@ namespace TicketToRide.Domain.Entities
 
             TurnoAtual = new Turno(1, Jogadores[0]);
             Iniciada = true;
+
+            this.Notify();
         }
 
         private void ValidarNumeroJogadoresEsperado(int numeroDeJogadores)
@@ -78,6 +84,8 @@ namespace TicketToRide.Domain.Entities
             }
 
             Finalizada = true;
+
+            this.Notify();
         }
 
         public Jogador? CalcularRotaMaisLonga()
@@ -177,6 +185,7 @@ namespace TicketToRide.Domain.Entities
                 NumeroJogadores = Jogadores.Count,
                 PodeIniciar = PodeIniciar(),
                 CartasVisiveis = BaralhoCartasVeiculo.ListarCartasReveladas().Select(x => x.MapearParaDTO()),
+                OpcoesBilheteDestino = BaralhoCartasDestino.ListarOpcoesSelecionaveis().Select(x => x.MapearParaDTO()),
             };
         }
 
@@ -184,6 +193,34 @@ namespace TicketToRide.Domain.Entities
         {
             TurnoAtual?.SalvarAcaoRealizada(acaoRealizada);
             AvancarTurno();
+        }
+
+        public void Attach(IObserver observer)
+        {
+            if (!_observadores.Contains(observer))
+            {
+                _observadores.Add(observer);
+                Console.WriteLine($"[Partida {Id}] Observer anexado: {observer.GetType().Name}");
+            }
+        }
+
+        public void Detach(IObserver observer)
+        {
+            if (_observadores.Contains(observer))
+            {
+                _observadores.Remove(observer);
+                Console.WriteLine($"[Partida {Id}] Observer desanexado: {observer.GetType().Name}");
+            }
+        }
+
+        public void Notify()
+        {
+            Console.WriteLine($"[Partida {Id}] Notificando observadores sobre mudança de estado...");
+
+            foreach (IObserver observer in _observadores)
+            {
+                observer.Update(this);
+            }
         }
     }
 }

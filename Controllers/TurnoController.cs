@@ -74,7 +74,7 @@ namespace TicketToRide.Controllers
         {
             try
             {
-                TurnoDTO turno = _turnoService.ComprarBilhetesDestino(partidaId, request.JogadorId, request.BilhetesSelecionados);
+                TurnoDTO turno = _turnoService.ComprarBilhetesDestino(partidaId, request.JogadorId, request.BilhetesSelecionados, request.PrimeiroTurno);
                 return Ok(turno);
             }
             catch (ArgumentException ex)
@@ -103,7 +103,8 @@ namespace TicketToRide.Controllers
     public class ComprarBilhetesRequest
     {
         public string JogadorId { get; set; } = string.Empty;
-        public List<string> BilhetesSelecionados { get; set; } = [];
+        public List<int> BilhetesSelecionados { get; set; } = [];
+        public bool PrimeiroTurno { get; set; }
     }
 
     public class PassarTurnoRequest

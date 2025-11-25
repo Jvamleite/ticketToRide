@@ -28,16 +28,9 @@ namespace TicketToRideAPI.Application.Services
         {
             int total = 0;
 
-            foreach (BilheteDestino bilhete in bilhetes)
+            foreach (BilheteDestino bilhete in bilhetes.Where(x => x.EstaCompleto()))
             {
-                if (bilhete.EstaCompleto(rotas))
-                {
-                    total += bilhete.Pontos;
-                }
-                else
-                {
-                    total -= bilhete.Pontos;
-                }
+                total += bilhete.Pontos;
             }
 
             return total;

@@ -6,6 +6,8 @@ class TicketToRideApp {
         this.currentPartidaId = null;
         this.currentJogadorId = null;
         this.cartasVisiveisSelecionadas = [];
+        this.bilhetesSelecionados = [];
+        this.primeiroTurnoFeito = new Set();
         this.init();
     }
 
@@ -40,6 +42,10 @@ class TicketToRideApp {
 
         document.getElementById('comprarBilhetesBtn')?.addEventListener('click', () => {
             comprarBilhetes();
+        });
+
+        document.getElementById('mostrarBilhetesBtn')?.addEventListener('click', () => {
+            mostrarBilhetesParaEscolha();
         });
 
         document.getElementById('atualizarJogoBtn')?.addEventListener('click', () => {
@@ -213,9 +219,9 @@ function reivindicarRota() {
     }
 }
 
-function comprarBilhetes() {
+function mostrarBilhetesParaEscolha() {
     if (window.jogoManager) {
-        window.jogoManager.comprarBilhetes();
+        window.jogoManager.mostrarBilhetesParaEscolha();
     }
 }
 

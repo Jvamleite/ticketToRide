@@ -85,6 +85,11 @@ namespace TicketToRide.Domain.Entities
             MonteDescarte.AddRange(carta);
         }
 
+        public void Descartar(T carta)
+        {
+            MonteDescarte.Add(carta);
+        }
+
         protected void Embaralhar()
         {
             RenovarMonteCompra();

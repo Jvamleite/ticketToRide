@@ -1,8 +1,7 @@
 using TicketToRide.Application.DTOs;
+using TicketToRide.Application.EventHandlers;
 using TicketToRide.Domain.Entities;
 using TicketToRide.Domain.Interfaces;
-using TicketToRideApi.Domain.Events;
-using TicketToRideApi.Domain.Interfaces;
 
 namespace TicketToRide.Application.Services
 {
@@ -11,14 +10,17 @@ namespace TicketToRide.Application.Services
         private static int _contadorId = 1;
 
         private readonly IPartidaRepository _partidaRepository;
-        private readonly IDomainEventDispatcher _eventDispatcher;
+        private readonly DistribuidorCartasObserver _distribuidorCartasObserver;
+        private readonly CalculadorPontuacaoObserver _calculadorPontuacaoObserver;
 
         public PartidaService(
             IPartidaRepository partidaRepository,
-            IDomainEventDispatcher eventDispatcher)
+            DistribuidorCartasObserver distribuidorCartasObserver,
+            CalculadorPontuacaoObserver calculadorPontuacaoObserver)
         {
             _partidaRepository = partidaRepository;
-            _eventDispatcher = eventDispatcher;
+            _distribuidorCartasObserver = distribuidorCartasObserver;
+            _calculadorPontuacaoObserver = calculadorPontuacaoObserver;
         }
 
         public PartidaDTO CriarPartida()
@@ -29,7 +31,12 @@ namespace TicketToRide.Application.Services
                 new BaralhoCartasDestino(DadosJogo.ObterBilhetesDestino()),
                 new BaralhoCartasVeiculo(DadosJogo.GerarCartasIniciais())
                 );
+
+            partida.Attach(_distribuidorCartasObserver);
+            partida.Attach(_calculadorPontuacaoObserver);
+
             _partidaRepository.SalvarPartida(partida);
+
             return partida.MapearParaDTO();
         }
 
@@ -42,11 +49,8 @@ namespace TicketToRide.Application.Services
         public PartidaDTO IniciarPartida(string id, int numJogadores)
         {
             Partida? partida = _partidaRepository.ObterPartida(id) ?? throw new ArgumentException("Partida não encontrada");
-            _eventDispatcher.Publish(new PartidaIniciadaEvent(
-                IdPartida: partida.Id,
-                NumeroJogadores: numJogadores,
-                OcorridoEm: DateTime.UtcNow
-                ));
+
+            partida.IniciarPartida(numJogadores);
 
             return partida.MapearParaDTO();
         }
@@ -54,10 +58,6 @@ namespace TicketToRide.Application.Services
         public PartidaDTO FinalizarPartida(string id)
         {
             Partida? partida = _partidaRepository.ObterPartida(id) ?? throw new ArgumentException("Partida não encontrada");
-            _eventDispatcher.Publish(new PartidaFinalizadaEvent(
-                IdPartida: partida.Id,
-                OcorridoEm: DateTime.UtcNow
-            ));
 
             return partida.MapearParaDTO();
         }
