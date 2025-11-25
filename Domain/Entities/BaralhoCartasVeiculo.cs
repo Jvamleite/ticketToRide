@@ -1,20 +1,10 @@
-using TicketToRide.Application;
-
 namespace TicketToRide.Domain.Entities
 {
     public class BaralhoCartasVeiculo : Baralho<CartaVeiculo>
     {
-        public BaralhoCartasVeiculo()
+        public BaralhoCartasVeiculo(IEnumerable<CartaVeiculo> cartas)
         {
-            InicializarBaralho([]);
-        }
-
-        protected override void InicializarBaralho(IEnumerable<CartaVeiculo> cartasT)
-        {
-            List<CartaVeiculo> cartas = DadosJogo.GerarCartasIniciais();
-            AdicionarCartasAoMonteCompra(cartas);
-
-            Embaralhar();
+            InicializarMonteCompra(cartas);
         }
 
         public CartaVeiculo? ComprarCartaRevelada(int indice)

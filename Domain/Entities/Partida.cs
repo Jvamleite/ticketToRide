@@ -1,4 +1,3 @@
-using TicketToRide.Application;
 using TicketToRide.Application.DTOs;
 
 namespace TicketToRide.Domain.Entities
@@ -7,9 +6,6 @@ namespace TicketToRide.Domain.Entities
     {
         private const int MinimoJogadores = 2;
         private const int MaximoJogadores = 5;
-        private const int CartasVeiculoIniciaisPorJogador = 4;
-        private const int CartasDestinoIniciaisPorJogador = 3;
-        private const int BonusRotaMaisLonga = 10;
 
         public string Id { get; }
         public List<Jogador> Jogadores { get; } = [];
@@ -25,28 +21,33 @@ namespace TicketToRide.Domain.Entities
             Id = id;
         }
 
-        public Partida()
+        public Partida(
+            string id,
+            Tabuleiro tabuleiro,
+            BaralhoCartasDestino baralhoDestino,
+            BaralhoCartasVeiculo baralhoVeiculo)
         {
-            Tabuleiro = new Tabuleiro(DadosJogo.ObterRotas());
-            BaralhoCartasDestino = new BaralhoCartasDestino();
-            BaralhoCartasVeiculo = new BaralhoCartasVeiculo();
+            Id = id;
+            Tabuleiro = tabuleiro;
+            BaralhoCartasDestino = baralhoDestino;
+            BaralhoCartasVeiculo = baralhoVeiculo;
         }
 
         public void IniciarPartida(int numeroDeJogadores)
         {
-            ValidarNumeroJogadoresEsperado(numeroDeJogadores);
-
             if (Iniciada)
             {
                 throw new InvalidOperationException("Partida já iniciada");
             }
 
-            //Subir depois validacoes para fora do dominio
+            ValidarNumeroJogadoresEsperado(numeroDeJogadores);
 
-            DistribuirCartasIniciais();
+            if (Jogadores.Count != numeroDeJogadores)
+            {
+                throw new InvalidOperationException($"Número de jogadores não corresponde ao esperado. Esperado: {numeroDeJogadores}, Atual: {Jogadores.Count}");
+            }
 
             TurnoAtual = new Turno(1, Jogadores[0]);
-
             Iniciada = true;
         }
 
@@ -63,15 +64,6 @@ namespace TicketToRide.Domain.Entities
             }
         }
 
-        private void DistribuirCartasIniciais()
-        {
-            foreach (Jogador jogador in Jogadores)
-            {
-                jogador.ComprarCartasVeiculo(BaralhoCartasVeiculo.Comprar(CartasVeiculoIniciaisPorJogador));
-                jogador.ComprarBilhetesDestino(BaralhoCartasDestino.Comprar(CartasDestinoIniciaisPorJogador));
-            }
-        }
-
         public void FinalizarPartida()
         {
             if (!Iniciada)
@@ -84,38 +76,16 @@ namespace TicketToRide.Domain.Entities
                 throw new InvalidOperationException("Partida já finalizada");
             }
 
-            CalcularPontuacaoFinal();
             Finalizada = true;
-        }
-
-        public void CalcularPontuacaoFinal()
-        {
-            foreach (Jogador jogador in Jogadores)
-            {
-                jogador.AtualizarPontuacao();
-            }
-
-            Jogador? vencedorRotaLonga = CalcularRotaMaisLonga();
-
-            vencedorRotaLonga?.AdicionarPontuacao(BonusRotaMaisLonga);
         }
 
         public Jogador? CalcularRotaMaisLonga()
         {
-            Jogador? vencedor = null;
-            int maiorComprimento = 0;
-
-            foreach (Jogador jogador in Jogadores)
-            {
-                int comprimento = jogador.CalcularComprimentoRotaContinua();
-                if (comprimento > maiorComprimento)
-                {
-                    maiorComprimento = comprimento;
-                    vencedor = jogador;
-                }
-            }
-
-            return vencedor;
+            return Jogadores
+                .Select(j => new { Jogador = j, Comprimento = j.CalcularComprimentoRotaContinua() })
+                .OrderByDescending(x => x.Comprimento)
+                .FirstOrDefault()
+                ?.Jogador;
         }
 
         public Turno AvancarTurno()
@@ -158,7 +128,7 @@ namespace TicketToRide.Domain.Entities
             return Jogadores.FirstOrDefault(j => j.Id == jogadorId);
         }
 
-        public bool PodeIniciar()
+        private bool PodeIniciar()
         {
             return Jogadores.Count >= MinimoJogadores && Jogadores.Count <= MaximoJogadores && !Iniciada;
         }
@@ -186,6 +156,11 @@ namespace TicketToRide.Domain.Entities
             }
 
             return "Aguardando";
+        }
+
+        public bool EstaNaVezDoJogador(string jogadorId)
+        {
+            return TurnoAtual?.ObterJogadorAtual().Id == jogadorId;
         }
 
         public PartidaDTO MapearParaDTO()

@@ -1,21 +1,34 @@
 using TicketToRide.Application.DTOs;
 using TicketToRide.Domain.Entities;
 using TicketToRide.Domain.Interfaces;
+using TicketToRideApi.Domain.Events;
+using TicketToRideApi.Domain.Interfaces;
 
 namespace TicketToRide.Application.Services
 {
     public class PartidaService
     {
-        private readonly IPartidaRepository _partidaRepository;
+        private static int _contadorId = 1;
 
-        public PartidaService(IPartidaRepository partidaRepository)
+        private readonly IPartidaRepository _partidaRepository;
+        private readonly IDomainEventDispatcher _eventDispatcher;
+
+        public PartidaService(
+            IPartidaRepository partidaRepository,
+            IDomainEventDispatcher eventDispatcher)
         {
             _partidaRepository = partidaRepository;
+            _eventDispatcher = eventDispatcher;
         }
 
         public PartidaDTO CriarPartida()
         {
-            Partida partida = _partidaRepository.CriarPartida();
+            Partida partida = new(
+                $"PARTIDA-{_contadorId++}",
+                new Tabuleiro(DadosJogo.ObterRotas()),
+                new BaralhoCartasDestino(DadosJogo.ObterBilhetesDestino()),
+                new BaralhoCartasVeiculo(DadosJogo.GerarCartasIniciais())
+                );
             _partidaRepository.SalvarPartida(partida);
             return partida.MapearParaDTO();
         }
@@ -28,39 +41,31 @@ namespace TicketToRide.Application.Services
 
         public PartidaDTO IniciarPartida(string id, int numJogadores)
         {
-            Partida? partida = _partidaRepository.ObterPartida(id);
-            if (partida == null)
-            {
-                throw new ArgumentException("Partida não encontrada");
-            }
+            Partida? partida = _partidaRepository.ObterPartida(id) ?? throw new ArgumentException("Partida não encontrada");
+            _eventDispatcher.Publish(new PartidaIniciadaEvent(
+                IdPartida: partida.Id,
+                NumeroJogadores: numJogadores,
+                OcorridoEm: DateTime.UtcNow
+                ));
 
-            partida.IniciarPartida(numJogadores);
-            _partidaRepository.SalvarPartida(partida);
             return partida.MapearParaDTO();
         }
 
         public PartidaDTO FinalizarPartida(string id)
         {
-            Partida? partida = _partidaRepository.ObterPartida(id);
-            if (partida == null)
-            {
-                throw new ArgumentException("Partida não encontrada");
-            }
+            Partida? partida = _partidaRepository.ObterPartida(id) ?? throw new ArgumentException("Partida não encontrada");
+            _eventDispatcher.Publish(new PartidaFinalizadaEvent(
+                IdPartida: partida.Id,
+                OcorridoEm: DateTime.UtcNow
+            ));
 
-            partida.FinalizarPartida();
-            _partidaRepository.SalvarPartida(partida);
             return partida.MapearParaDTO();
         }
 
         public List<PartidaDTO> ObterTodasPartidas()
         {
             List<Partida> partidas = _partidaRepository.ObterTodasPartidas();
-            return partidas.Select(p => p.MapearParaDTO()).ToList();
-        }
-
-        public bool ExistePartida(string id)
-        {
-            return _partidaRepository.ExistePartida(id);
+            return partidas.ConvertAll(p => p.MapearParaDTO());
         }
     }
 }

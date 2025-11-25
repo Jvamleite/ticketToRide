@@ -11,8 +11,8 @@ namespace TicketToRide.Domain.Entities
         public int Pontuacao { get; private set; } = 0;
         private int PecasTremRestante { get; set; } = 45;
         private List<CartaVeiculo> MaoCartas { get; } = [];
-        private List<BilheteDestino> BilhetesDestino { get; } = [];
-        private List<Rota> RotasConquistadas { get; } = [];
+        public List<BilheteDestino> BilhetesDestino { get; } = [];
+        public List<Rota> RotasConquistadas { get; } = [];
 
         public Jogador(string id, string nome)
         {
@@ -20,18 +20,13 @@ namespace TicketToRide.Domain.Entities
             Nome = nome;
         }
 
-        public int ConquistarRota(Rota rota)
+        public void ConquistarRota(Rota rota)
         {
             RemoverCartasDaMao(SelecionarCartasParaRota(rota));
 
             RotasConquistadas.Add(rota);
 
             RemoverPecasTrem(rota.Tamanho);
-
-            int pontos = rota.CalcularPontos();
-            Pontuacao += pontos;
-
-            return pontos;
         }
 
         public bool TemPecasSuficientesParaConquistarRota(Rota rota)
@@ -79,30 +74,6 @@ namespace TicketToRide.Domain.Entities
         public void ComprarBilhetesDestino(IEnumerable<BilheteDestino> bilhetes)
         {
             BilhetesDestino.AddRange(bilhetes);
-        }
-
-        private int CalcularPontosBilhetes()
-        {
-            int pontos = 0;
-            foreach (BilheteDestino bilhete in BilhetesDestino)
-            {
-                if (bilhete.EstaCompleto(RotasConquistadas))
-                {
-                    pontos += bilhete.Pontos;
-                }
-                else
-                {
-                    pontos -= bilhete.Pontos;
-                }
-            }
-            return pontos;
-        }
-
-        public void AtualizarPontuacao()
-        {
-            int pontosBilhetes = CalcularPontosBilhetes();
-
-            Pontuacao += pontosBilhetes;
         }
 
         public List<CartaVeiculo> ObterCartasParaCor(Cor cor)

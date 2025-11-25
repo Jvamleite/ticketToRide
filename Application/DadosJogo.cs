@@ -5,11 +5,10 @@ namespace TicketToRide.Application
 {
     public static class DadosJogo
     {
-        public static List<Cidade> ObterCidades()
+        private static List<Cidade> ObterCidades()
         {
-            return new List<Cidade>
-            {
-                // Cidades do Oeste
+            return
+            [
                 new Cidade("Vancouver"),
                 new Cidade("Seattle"),
                 new Cidade("Portland"),
@@ -46,18 +45,16 @@ namespace TicketToRide.Application
                 new Cidade("Winnipeg"),
                 new Cidade("Calgary"),
                 new Cidade("Vancouver")
-            };
+            ];
         }
 
         public static List<Rota> ObterRotas()
         {
-            var cidades = ObterCidades();
-            var rotas = new List<Rota>();
+            List<Cidade> cidades = ObterCidades();
+            List<Rota> rotas = [];
 
-            // Função auxiliar para encontrar cidade por nome
-            Cidade EncontrarCidade(string nome) => cidades.First(c => c.Nome == nome);
+            Cidade EncontrarCidade(string nome) => cidades.First(c => c.ToString() == nome);
 
-            // Rotas do Oeste
             rotas.Add(new Rota("VAN-SEA-1", EncontrarCidade("Vancouver"), EncontrarCidade("Seattle"), Cor.CINZA, 1));
             rotas.Add(new Rota("VAN-SEA-2", EncontrarCidade("Vancouver"), EncontrarCidade("Seattle"), Cor.CINZA, 1, true));
             rotas.Add(new Rota("SEA-POR-1", EncontrarCidade("Seattle"), EncontrarCidade("Portland"), Cor.CINZA, 1));
@@ -205,18 +202,17 @@ namespace TicketToRide.Application
             rotas.Add(new Rota("EP-HEL-1", EncontrarCidade("El Paso"), EncontrarCidade("Helena"), Cor.BRANCO, 5));
             rotas.Add(new Rota("EP-PHO-1", EncontrarCidade("El Paso"), EncontrarCidade("Phoenix"), Cor.VERMELHO, 5));
             rotas.Add(new Rota("EP-SF-1", EncontrarCidade("El Paso"), EncontrarCidade("Santa Fe"), Cor.AZUL, 5));
-            
+
             return rotas;
         }
 
         public static List<BilheteDestino> ObterBilhetesDestino()
         {
-            var cidades = ObterCidades();
+            List<Cidade> cidades = ObterCidades();
             Cidade EncontrarCidade(string nome) => cidades.First(c => c.Nome == nome);
 
-            return new List<BilheteDestino>
-            {
-                // Bilhetes de curta distância (1-6 pontos)
+            return
+            [
                 new BilheteDestino(EncontrarCidade("Vancouver"), EncontrarCidade("Seattle"), 1),
                 new BilheteDestino(EncontrarCidade("Seattle"), EncontrarCidade("Portland"), 1),
                 new BilheteDestino(EncontrarCidade("Portland"), EncontrarCidade("San Francisco"), 5),
@@ -336,20 +332,34 @@ namespace TicketToRide.Application
                 new BilheteDestino(EncontrarCidade("El Paso"), EncontrarCidade("Helena"), 5),
                 new BilheteDestino(EncontrarCidade("El Paso"), EncontrarCidade("Phoenix"), 5),
                 new BilheteDestino(EncontrarCidade("El Paso"), EncontrarCidade("Santa Fe"), 5)
-            };
+            ];
         }
 
-        public static Dictionary<int, int> ObterTabelaPontuacao()
+        public static List<CartaVeiculo> GerarCartasIniciais()
         {
-            return new Dictionary<int, int>
+            const int CARTAS_POR_COR = 12;
+            const int LOCOMOTIVAS_INICIAIS = 14;
+            Cor[] CORES_DISPONIVEIS =
+            [
+                Cor.VERMELHO, Cor.AZUL, Cor.VERDE, Cor.AMARELO,
+                Cor.PRETO, Cor.BRANCO, Cor.LARANJA, Cor.ROSA
+            ];
+
+            List<CartaVeiculo> cartas = [];
+            foreach (Cor cor in CORES_DISPONIVEIS)
             {
-                { 1, 1 },
-                { 2, 2 },
-                { 3, 4 },
-                { 4, 7 },
-                { 5, 10 },
-                { 6, 15 }
-            };
+                for (int i = 0; i < CARTAS_POR_COR; i++)
+                {
+                    cartas.Add(new CartaVeiculo(cor));
+                }
+            }
+
+            for (int i = 0; i < LOCOMOTIVAS_INICIAIS; i++)
+            {
+                cartas.Add(new CartaVeiculo(Cor.LOCOMOTIVA));
+            }
+
+            return cartas;
         }
     }
 }

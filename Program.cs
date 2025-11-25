@@ -1,8 +1,9 @@
-using TicketToRide.Domain.Interfaces;
 using TicketToRide.Application.Repositories;
 using TicketToRide.Application.Services;
+using TicketToRide.Configuration;
+using TicketToRide.Domain.Interfaces;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -21,12 +22,13 @@ builder.Services.AddCors(options =>
 });
 
 // Add dependency injection
+builder.Services.AddEventHandling();
 builder.Services.AddScoped<IPartidaRepository, PartidaRepositoryMemory>();
 builder.Services.AddScoped<PartidaService>();
 builder.Services.AddScoped<JogadorService>();
 builder.Services.AddScoped<TurnoService>();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -15,12 +15,12 @@ namespace TicketToRide.Domain.Entities
             Pontos = pontos;
         }
 
-        public bool EstaCompleto(List<Rota> rotasJogador)
+        public bool EstaCompleto(IEnumerable<Rota> rotasJogador)
         {
             return ExisteCaminho(Origem, Destino, rotasJogador);
         }
 
-        private static bool ExisteCaminho(Cidade origem, Cidade destino, List<Rota> rotas)
+        private static bool ExisteCaminho(Cidade origem, Cidade destino, IEnumerable<Rota> rotas)
         {
             if (origem.Equals(destino))
             {

@@ -5,8 +5,6 @@ namespace TicketToRide.Domain.Entities
         private List<T> MonteCompra { get; } = [];
         private List<T> MonteDescarte { get; } = [];
 
-        protected abstract void InicializarBaralho(IEnumerable<T> cartas);
-
         private bool TemCarta()
         {
             return MonteCompra.Count > 0;
