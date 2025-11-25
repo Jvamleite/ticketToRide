@@ -4,13 +4,13 @@ namespace TicketToRide.Domain.Entities
 {
     public class Rota
     {
-        public string Id { get; set; }
-        public Cidade Origem { get; set; }
-        public Cidade Destino { get; set; }
-        public Cor Cor { get; set; }
-        public int Tamanho { get; set; }
-        public bool EhDupla { get; set; }
-        public bool Disponivel { get; set; } = true;
+        public string Id { get; }
+        public Cidade Origem { get; }
+        public Cidade Destino { get; }
+        public Cor Cor { get; }
+        public int Tamanho { get; }
+        public bool Dupla { get; }
+        public bool Disponivel { get; } = true;
 
         public Rota(string id, Cidade origem, Cidade destino, Cor cor, int tamanho, bool ehDupla = false)
         {
@@ -19,7 +19,7 @@ namespace TicketToRide.Domain.Entities
             Destino = destino;
             Cor = cor;
             Tamanho = tamanho;
-            EhDupla = ehDupla;
+            Dupla = ehDupla;
         }
 
         public int CalcularPontos()
@@ -36,15 +36,9 @@ namespace TicketToRide.Domain.Entities
             };
         }
 
-        public bool PodeSerConquistadaPor(Jogador jogador)
+        public bool PodeSerConquistadaCom(CartaVeiculo carta)
         {
-            if (!Disponivel)
-            {
-                return false;
-            }
-
-            List<CartaVeiculo> cartasNecessarias = jogador.ObterCartasParaCor(Cor);
-            return cartasNecessarias.Count >= Tamanho;
+            return carta.PodeSerUsadaPara(Cor);
         }
     }
 }

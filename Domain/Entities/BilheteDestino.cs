@@ -2,18 +2,18 @@ namespace TicketToRide.Domain.Entities
 {
     public class BilheteDestino : Carta
     {
-        public Cidade Origem { get; set; }
-        public Cidade Destino { get; set; }
-        public int Pontos { get; set; }
+        public Cidade Origem { get; }
+        public Cidade Destino { get; }
+        public int Pontos { get; }
 
-        public BilheteDestino(Cidade origem, Cidade destino, int pontos) : base($"{origem.Nome} → {destino.Nome}")
+        public BilheteDestino(Cidade origem, Cidade destino, int pontos) : base($"{origem.ObterNomeFormatado(destino)}")
         {
             Origem = origem;
             Destino = destino;
             Pontos = pontos;
         }
 
-        public bool IsCompleto(List<Rota> rotasJogador)
+        public bool EstaCompleto(List<Rota> rotasJogador)
         {
             return ExisteCaminho(Origem, Destino, rotasJogador);
         }
@@ -25,7 +25,7 @@ namespace TicketToRide.Domain.Entities
                 return true;
             }
 
-            HashSet<Cidade> visitadas = new();
+            HashSet<Cidade> visitadas = [];
             Queue<Cidade> fila = new();
             fila.Enqueue(origem);
             visitadas.Add(origem);

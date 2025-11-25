@@ -1,58 +1,85 @@
+using TicketToRide.Application;
+
 namespace TicketToRide.Domain.Entities
 {
     public class Partida
     {
-        public string Id { get; set; } = string.Empty;
-        public List<Jogador> Jogadores { get; set; } = [];
-        public Tabuleiro Tabuleiro { get; set; }
-        public BaralhoCartasDestino BaralhoCartasDestino { get; set; }
-        public BaralhoCartasVeiculo BaralhoCartasVeiculo { get; set; }
-        public Turno? TurnoAtual { get; set; }
-        public bool PartidaIniciada { get; set; } = false;
-        public bool PartidaFinalizada { get; set; } = false;
+        private const int MinimoJogadores = 2;
+        private const int MaximoJogadores = 5;
+        private const int CartasVeiculoIniciaisPorJogador = 4;
+        private const int CartasDestinoIniciaisPorJogador = 3;
+        private const int BonusRotaMaisLonga = 10;
+
+        public string Id { get; }
+        public List<Jogador> Jogadores { get; } = [];
+        public Tabuleiro Tabuleiro { get; }
+        public BaralhoCartasDestino BaralhoCartasDestino { get; }
+        public BaralhoCartasVeiculo BaralhoCartasVeiculo { get; }
+        public Turno? TurnoAtual { get; private set; }
+        public bool Iniciada { get; set; }
+        public bool Finalizada { get; set; }
 
         public Partida()
         {
-            Tabuleiro = new Tabuleiro();
+            Tabuleiro = new Tabuleiro(DadosJogo.ObterRotas());
             BaralhoCartasDestino = new BaralhoCartasDestino();
             BaralhoCartasVeiculo = new BaralhoCartasVeiculo();
         }
 
-        public Partida IniciarPartida(int numJogadores)
+        public void IniciarPartida(int numeroDeJogadores)
         {
-            if (numJogadores < 2 || numJogadores > 5)
+            ValidarNumeroJogadoresEsperado(numeroDeJogadores);
+
+            if (Iniciada)
             {
-                throw new ArgumentException("Número de jogadores deve ser entre 2 e 5");
+                throw new InvalidOperationException("Partida já iniciada");
             }
 
-            if (Jogadores.Count != numJogadores)
+            //Subir depois validacoes para fora do dominio
+
+            DistribuirCartasIniciais();
+
+            TurnoAtual = new Turno(1, Joga[0]);
+
+            Iniciada = true;
+        }
+
+        private void ValidarNumeroJogadoresEsperado(int numeroDeJogadores)
+        {
+            if (numeroDeJogadores < MinimoJogadores || numeroDeJogadores > MaximoJogadores)
             {
-                throw new InvalidOperationException($"Número de jogadores não corresponde ao esperado. Esperado: {numJogadores}, Atual: {Jogadores.Count}");
+                throw new ArgumentException($"Número de jogadores deve ser entre {MinimoJogadores} e {MaximoJogadores}");
             }
 
-            PartidaIniciada = true;
+            if (Jogadores.Count != numeroDeJogadores)
+            {
+                throw new InvalidOperationException($"Número de jogadores não corresponde ao esperado. Esperado: {numeroDeJogadores}, Atual: {_jogadores.Count}");
+            }
+        }
 
+        private void DistribuirCartasIniciais()
+        {
             foreach (Jogador jogador in Jogadores)
             {
-                List<CartaVeiculo> cartasIniciais = BaralhoCartasVeiculo.ComprarVarias(4);
-                jogador.ComprarCartas(cartasIniciais);
+                jogador.ComprarCartasVeiculo(BaralhoCartasVeiculo.Comprar(CartasVeiculoIniciaisPorJogador));
+                jogador.ComprarBilhetesDestino(BaralhoCartasDestino.Comprar(CartasDestinoIniciaisPorJogador));
             }
-
-            TurnoAtual = new Turno(1, Jogadores[0]);
-
-            return this;
         }
 
         public void FinalizarPartida()
         {
-            if (!PartidaIniciada)
+            if (!Iniciada)
             {
                 throw new InvalidOperationException("Partida não foi iniciada");
             }
 
-            PartidaFinalizada = true;
+            if (Finalizada)
+            {
+                throw new InvalidOperationException("Partida já finalizada");
+            }
 
             CalcularPontuacaoFinal();
+            Finalizada = true;
         }
 
         public void CalcularPontuacaoFinal()
@@ -63,10 +90,8 @@ namespace TicketToRide.Domain.Entities
             }
 
             Jogador? vencedorRotaLonga = CalcularRotaMaisLonga();
-            if (vencedorRotaLonga != null)
-            {
-                vencedorRotaLonga.Pontuacao += 10;
-            }
+
+            vencedorRotaLonga?.AdicionarPontuacao(10);
         }
 
         public Jogador? CalcularRotaMaisLonga()
@@ -87,7 +112,7 @@ namespace TicketToRide.Domain.Entities
             return vencedor;
         }
 
-        public Turno CriarProximoTurno()
+        public Turno AvancarTurno()
         {
             if (TurnoAtual == null)
             {
@@ -97,7 +122,6 @@ namespace TicketToRide.Domain.Entities
             Jogador proximoJogador = ObterProximoJogador(TurnoAtual.JogadorAtual);
             Turno proximoTurno = new(TurnoAtual.Numero + 1, proximoJogador);
             TurnoAtual = proximoTurno;
-
             return proximoTurno;
         }
 
@@ -110,14 +134,14 @@ namespace TicketToRide.Domain.Entities
 
         public void AdicionarJogador(Jogador jogador)
         {
-            if (PartidaIniciada)
+            if (Iniciada)
             {
                 throw new InvalidOperationException("Não é possível adicionar jogadores após o início da partida");
             }
 
-            if (Jogadores.Count >= 5)
+            if (Jogadores.Count >= MaximoJogadores)
             {
-                throw new InvalidOperationException("Número máximo de jogadores atingido (5)");
+                throw new InvalidOperationException($"Número máximo de jogadores atingido ({MaximoJogadores})");
             }
 
             Jogadores.Add(jogador);
@@ -130,7 +154,7 @@ namespace TicketToRide.Domain.Entities
 
         public bool PodeIniciar()
         {
-            return Jogadores.Count >= 2 && Jogadores.Count <= 5 && !PartidaIniciada;
+            return Jogadores.Count >= MinimoJogadores && Jogadores.Count <= MaximoJogadores && !Iniciada;
         }
 
         public List<Jogador> ObterRanking()
@@ -140,8 +164,22 @@ namespace TicketToRide.Domain.Entities
 
         public override string ToString()
         {
-            string status = PartidaFinalizada ? "Finalizada" : PartidaIniciada ? "Em Andamento" : "Aguardando";
-            return $"Partida {Id} - {Jogadores.Count} jogadores - {status}";
+            return $"Partida {Id} - {Jogadores.Count} jogadores - {ObterStatusPartida()}";
+        }
+
+        private string ObterStatusPartida()
+        {
+            if (Finalizada)
+            {
+                return "Finalizada";
+            }
+
+            if (Iniciada)
+            {
+                return "Em Andamento";
+            }
+
+            return "Aguardando";
         }
     }
 }

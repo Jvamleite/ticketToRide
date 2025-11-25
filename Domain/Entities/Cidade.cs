@@ -1,8 +1,8 @@
-namespace TicketToRide.Domain.Entities
+﻿namespace TicketToRide.Domain.Entities
 {
     public class Cidade
     {
-        public string Nome { get; set; }
+        public string Nome { get; }
 
         public Cidade(string nome)
         {
@@ -12,6 +12,11 @@ namespace TicketToRide.Domain.Entities
         public override string ToString()
         {
             return Nome;
+        }
+
+        public string ObterNomeFormatado(Cidade destino)
+        {
+            return $"{Nome} → {destino.Nome}";
         }
 
         public override bool Equals(object? obj)

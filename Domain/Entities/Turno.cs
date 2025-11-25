@@ -4,10 +4,10 @@ namespace TicketToRide.Domain.Entities
 {
     public class Turno
     {
-        public int Numero { get; set; }
-        public Jogador JogadorAtual { get; set; }
-        public Acao? AcaoRealizada { get; set; }
-        public bool AcaoCompletada { get; set; } = false;
+        public int Numero { get; }
+        public Jogador JogadorAtual { get; }
+        public Acao? AcaoRealizada { get; private set; }
+        public bool AcaoCompletada => AcaoRealizada is not null;
 
         public Turno(int numero, Jogador jogadorAtual)
         {
@@ -18,7 +18,6 @@ namespace TicketToRide.Domain.Entities
         public void ExecutarAcao(Acao acao)
         {
             AcaoRealizada = acao;
-            AcaoCompletada = true;
         }
 
         public bool PodeExecutarAcao()

@@ -1,4 +1,4 @@
-using TicketToRide.Domain.Enums;
+using TicketToRide.Application;
 
 namespace TicketToRide.Domain.Entities
 {
@@ -9,36 +9,22 @@ namespace TicketToRide.Domain.Entities
             InicializarBaralho([]);
         }
 
-        public override void InicializarBaralho(List<CartaVeiculo> cartas)
+        protected override void InicializarBaralho(IEnumerable<CartaVeiculo> cartasT)
         {
-            Cor[] cores = [Cor.VERMELHO, Cor.AZUL, Cor.VERDE, Cor.AMARELO, Cor.PRETO, Cor.BRANCO, Cor.LARANJA, Cor.ROSA];
-
-            foreach (Cor cor in cores)
-            {
-                for (int i = 0; i < 12; i++)
-                {
-                    MonteCompra.Add(new CartaVeiculo(cor));
-                }
-            }
-
-            for (int i = 0; i < 14; i++)
-            {
-                MonteCompra.Add(new CartaVeiculo(Cor.LOCOMOTIVA));
-            }
+            List<CartaVeiculo> cartas = DadosJogo.GerarCartasIniciais();
+            AdicionarCartasAoMonteCompra(cartas);
 
             Embaralhar();
         }
 
-        public CartaVeiculo? ComprarCartaVisivel(int indice)
+        public CartaVeiculo? ComprarCartaRevelada(int indice)
         {
-            if (indice < 0 || indice >= MonteCompra.Count)
+            if (indice < 0 || indice >= ObterTamanhoMonte())
             {
                 return null;
             }
 
-            CartaVeiculo carta = MonteCompra[indice];
-            MonteCompra.RemoveAt(indice);
-            return carta;
+            return ObterCartaPorIndice(indice);
         }
     }
 }

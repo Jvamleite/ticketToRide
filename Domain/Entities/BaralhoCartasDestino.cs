@@ -1,29 +1,39 @@
+using TicketToRide.Application;
+
 namespace TicketToRide.Domain.Entities
 {
     public class BaralhoCartasDestino : Baralho<BilheteDestino>
     {
         public BaralhoCartasDestino()
         {
-            InicializarBaralho([]);
+            InicializarBaralho(DadosJogo.ObterBilhetesDestino());
         }
 
-        public override void InicializarBaralho(List<BilheteDestino> bilhetes)
+        protected override void InicializarBaralho(IEnumerable<BilheteDestino> bilhetes)
         {
-            MonteCompra.AddRange(bilhetes);
-            Embaralhar();
+            InicializarMonteCompra(bilhetes);
         }
 
-        public List<BilheteDestino> ComprarBilhetes(int quantidade = 3)
+        /*
+         *
+         * VERIFICAR NECESSIDADE DESSE FLUXO OU SE SÓ COMPRAR 3 CARTAS É SUFICIENTE
+
+        public List<BilheteDestino> ComprarBilhetes()
         {
-            return ComprarVarias(quantidade);
+            ValidarQuantidadeBilhetes(quantidade);
+            return Comprar(quantidade);
         }
 
-        public void DevolverBilhetes(List<BilheteDestino> bilhetes)
+        private static void ValidarQuantidadeBilhetes(int quantidade)
         {
-            foreach (BilheteDestino bilhete in bilhetes)
+            if (quantidade < BILHETES_MINIMOS_POR_COMPRA
+                || quantidade > BILHETES_MAXIMOS_POR_COMPRA)
             {
-                Descartar(bilhete);
+                throw new InvalidOperationException(
+                    $"Deve comprar entre {BILHETES_MINIMOS_POR_COMPRA} " +
+                    $"e {BILHETES_MAXIMOS_POR_COMPRA} bilhetes.");
             }
         }
+        */
     }
 }
