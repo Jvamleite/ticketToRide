@@ -6,7 +6,6 @@ namespace TicketToRide.Application.DTOs
     {
         public string Nome { get; set; } = string.Empty;
         public Cor Cor { get; set; }
-        public bool EhLocomotiva { get; set; }
         public string Descricao { get; set; } = string.Empty;
     }
 }

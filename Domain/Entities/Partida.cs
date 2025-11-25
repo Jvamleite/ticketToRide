@@ -1,4 +1,5 @@
 using TicketToRide.Application;
+using TicketToRide.Application.DTOs;
 
 namespace TicketToRide.Domain.Entities
 {
@@ -16,8 +17,13 @@ namespace TicketToRide.Domain.Entities
         public BaralhoCartasDestino BaralhoCartasDestino { get; }
         public BaralhoCartasVeiculo BaralhoCartasVeiculo { get; }
         public Turno? TurnoAtual { get; private set; }
-        public bool Iniciada { get; set; }
-        public bool Finalizada { get; set; }
+        public bool Iniciada { get; private set; }
+        public bool Finalizada { get; private set; }
+
+        public Partida(string id)
+        {
+            Id = id;
+        }
 
         public Partida()
         {
@@ -39,7 +45,7 @@ namespace TicketToRide.Domain.Entities
 
             DistribuirCartasIniciais();
 
-            TurnoAtual = new Turno(1, Joga[0]);
+            TurnoAtual = new Turno(1, Jogadores[0]);
 
             Iniciada = true;
         }
@@ -53,7 +59,7 @@ namespace TicketToRide.Domain.Entities
 
             if (Jogadores.Count != numeroDeJogadores)
             {
-                throw new InvalidOperationException($"Número de jogadores não corresponde ao esperado. Esperado: {numeroDeJogadores}, Atual: {_jogadores.Count}");
+                throw new InvalidOperationException($"Número de jogadores não corresponde ao esperado. Esperado: {numeroDeJogadores}, Atual: {Jogadores.Count}");
             }
         }
 
@@ -91,7 +97,7 @@ namespace TicketToRide.Domain.Entities
 
             Jogador? vencedorRotaLonga = CalcularRotaMaisLonga();
 
-            vencedorRotaLonga?.AdicionarPontuacao(10);
+            vencedorRotaLonga?.AdicionarPontuacao(BonusRotaMaisLonga);
         }
 
         public Jogador? CalcularRotaMaisLonga()
@@ -119,7 +125,7 @@ namespace TicketToRide.Domain.Entities
                 throw new InvalidOperationException("Não há turno atual");
             }
 
-            Jogador proximoJogador = ObterProximoJogador(TurnoAtual.JogadorAtual);
+            Jogador proximoJogador = ObterProximoJogador(TurnoAtual.ObterJogadorAtual());
             Turno proximoTurno = new(TurnoAtual.Numero + 1, proximoJogador);
             TurnoAtual = proximoTurno;
             return proximoTurno;
@@ -180,6 +186,21 @@ namespace TicketToRide.Domain.Entities
             }
 
             return "Aguardando";
+        }
+
+        public PartidaDTO MapearParaDTO()
+        {
+            return new PartidaDTO
+            {
+                Id = Id,
+                Jogadores = Jogadores.ConvertAll(x => x.MapearJogadorParaDTO()),
+                Rotas = Tabuleiro.Rotas.ConvertAll(x => x.MapearParaDTO()),
+                TurnoAtual = TurnoAtual?.MapearParaDTO(),
+                PartidaIniciada = Iniciada,
+                PartidaFinalizada = Finalizada,
+                NumeroJogadores = Jogadores.Count,
+                PodeIniciar = PodeIniciar()
+            };
         }
     }
 }

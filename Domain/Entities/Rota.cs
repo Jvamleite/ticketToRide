@@ -1,3 +1,4 @@
+using TicketToRide.Application.DTOs;
 using TicketToRide.Domain.Enums;
 
 namespace TicketToRide.Domain.Entities
@@ -9,7 +10,7 @@ namespace TicketToRide.Domain.Entities
         public Cidade Destino { get; }
         public Cor Cor { get; }
         public int Tamanho { get; }
-        public bool Dupla { get; }
+        private bool Dupla { get; }
         public bool Disponivel { get; } = true;
 
         public Rota(string id, Cidade origem, Cidade destino, Cor cor, int tamanho, bool ehDupla = false)
@@ -39,6 +40,21 @@ namespace TicketToRide.Domain.Entities
         public bool PodeSerConquistadaCom(CartaVeiculo carta)
         {
             return carta.PodeSerUsadaPara(Cor);
+        }
+
+        public RotaDTO MapearParaDTO()
+        {
+            return new RotaDTO
+            {
+                Id = Id,
+                Origem = Origem.Nome,
+                Destino = Destino.Nome,
+                Cor = Cor,
+                Tamanho = Tamanho,
+                EhDupla = Dupla,
+                EstaDisponivel = Disponivel,
+                Pontos = CalcularPontos()
+            };
         }
     }
 }

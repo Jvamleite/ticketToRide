@@ -1,3 +1,5 @@
+using TicketToRide.Application.DTOs;
+
 namespace TicketToRide.Domain.Entities
 {
     public class BilheteDestino : Carta
@@ -66,6 +68,18 @@ namespace TicketToRide.Domain.Entities
         public override string ToString()
         {
             return $"{Origem.Nome} → {Destino.Nome} ({Pontos} pontos)";
+        }
+
+        public new BilheteDestinoDTO MapearParaDTO()
+        {
+            return new BilheteDestinoDTO
+            {
+                Origem = Origem.Nome,
+                Destino = Destino.Nome,
+                Pontos = Pontos,
+                IsCompleto = false,
+                Descricao = ToString()
+            };
         }
     }
 }

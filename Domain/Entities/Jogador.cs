@@ -1,3 +1,4 @@
+using TicketToRide.Application.DTOs;
 using TicketToRide.Domain.Enums;
 
 namespace TicketToRide.Domain.Entities
@@ -8,10 +9,10 @@ namespace TicketToRide.Domain.Entities
         public string Id { get; }
         public string Nome { get; }
         public int Pontuacao { get; private set; } = 0;
-        public int PecasTremRestante { get; set; } = 45;
-        public List<CartaVeiculo> MaoCartas { get; } = [];
-        public List<BilheteDestino> BilhetesDestino { get; } = [];
-        public List<Rota> RotasConquistadas { get; } = [];
+        private int PecasTremRestante { get; set; } = 45;
+        private List<CartaVeiculo> MaoCartas { get; } = [];
+        private List<BilheteDestino> BilhetesDestino { get; } = [];
+        private List<Rota> RotasConquistadas { get; } = [];
 
         public Jogador(string id, string nome)
         {
@@ -139,6 +140,23 @@ namespace TicketToRide.Domain.Entities
         public void AdicionarPontuacao(int pontos)
         {
             Pontuacao += pontos;
+        }
+
+        public JogadorDTO MapearJogadorParaDTO()
+        {
+            return new JogadorDTO
+            {
+                Id = Id,
+                Nome = Nome,
+                Pontuacao = Pontuacao,
+                PecasTremRestante = PecasTremRestante,
+                MaoCartas = MaoCartas.ConvertAll(c => c.MapearParaDTO()),
+                BilhetesDestino = BilhetesDestino.ConvertAll(b => b.MapearParaDTO()),
+                RotasConquistadas = RotasConquistadas.ConvertAll(r => r.MapearParaDTO()),
+                NumeroCartas = MaoCartas.Count,
+                NumeroBilhetes = BilhetesDestino.Count,
+                NumeroRotas = RotasConquistadas.Count
+            };
         }
     }
 }
