@@ -22,8 +22,8 @@ builder.Services.AddCors(options =>
 });
 
 // Add dependency injection
+builder.Services.AddSingleton<IPartidaRepository, PartidaRepositoryMemory>();
 builder.Services.AddEventHandling();
-builder.Services.AddScoped<IPartidaRepository, PartidaRepositoryMemory>();
 builder.Services.AddScoped<PartidaService>();
 builder.Services.AddScoped<JogadorService>();
 builder.Services.AddScoped<TurnoService>();

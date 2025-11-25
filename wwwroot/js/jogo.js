@@ -135,7 +135,7 @@ class JogoManager {
             html += `
                 <tr>
                     <td>${rota.origem} → ${rota.destino}</td>
-                    <td><span class="badge" style="background-color: ${this.getCorHex(rota.cor)}">${this.getCorNome(rota.cor)}</span></td>
+                    <td><span class="badge" style="background-color: ${this.getCorHex(rota.cor)}; color: ${this.getCorTextoConformeBackground(rota.cor)}">${this.getCorNome(rota.cor)}</span></td>
                     <td>${rota.tamanho}</td>
                     <td>${rota.pontos}</td>
                     <td>
@@ -373,18 +373,26 @@ class JogoManager {
 
     getCorNome(corNumero) {
         const cores = {
-            0: 'Vermelho',
-            1: 'Azul',
-            2: 'Verde',
-            3: 'Amarelo',
-            4: 'Preto',
-            5: 'Branco',
-            6: 'Laranja',
-            7: 'Rosa',
-            8: 'Cinza',
-            9: 'Locomotiva'
+            'VERMELHO': 'Vermelho',
+            'AZUL': 'Azul',
+            'VERDE': 'Verde',
+            'AMARELO': 'Amarelo',
+            'PRETO': 'Preto',
+            'BRANCO': 'Branco',
+            'LARANJA': 'Laranja',
+            'ROSA': 'Rosa',
+            'CINZA': 'Cinza',
+            'LOCOMOTIVA': 'Locomotiva'
         };
         return cores[corNumero] || 'Desconhecida';
+    }
+
+    getCorTextoConformeBackground(backgroundColor) {
+        const cores = {
+            'AMARELO': '#212529',
+            'BRANCO': '#212529',
+        };
+        return cores[backgroundColor] || "#f8f9fa";
     }
 }
 

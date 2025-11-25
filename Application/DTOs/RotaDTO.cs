@@ -1,5 +1,3 @@
-using TicketToRide.Domain.Enums;
-
 namespace TicketToRide.Application.DTOs
 {
     public class RotaDTO
@@ -7,7 +5,7 @@ namespace TicketToRide.Application.DTOs
         public string Id { get; set; } = string.Empty;
         public string Origem { get; set; } = string.Empty;
         public string Destino { get; set; } = string.Empty;
-        public Cor Cor { get; set; }
+        public string Cor { get; set; }
         public int Tamanho { get; set; }
         public bool EhDupla { get; set; }
         public string? JogadorId { get; set; }

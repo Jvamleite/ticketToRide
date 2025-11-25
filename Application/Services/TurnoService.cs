@@ -68,7 +68,7 @@ namespace TicketToRide.Application.Services
                 cartasCompradas = partida.BaralhoCartasVeiculo.Comprar(2);
             }
 
-            jogador.ComprarCartasVeiculo(cartasCompradas);
+            jogador.AdiconarCartasVeiculo(cartasCompradas);
             partida.TurnoAtual.ExecutarAcao(Acao.COMPRAR_CARTAS_VEICULO);
 
             _partidaRepository.SalvarPartida(partida);
@@ -153,7 +153,7 @@ namespace TicketToRide.Application.Services
             List<BilheteDestino> bilhetesParaManter = bilhetesComprados.Where(b =>
                 bilhetesSelecionados.Contains($"{b.Origem.Nome}-{b.Destino.Nome}")).ToList();
 
-            jogador.ComprarBilhetesDestino(bilhetesParaManter);
+            jogador.AdicionarBilhetesDestino(bilhetesParaManter);
 
             // Devolver bilhetes não selecionados ao baralho
             List<BilheteDestino> bilhetesParaDevolver = bilhetesComprados.Except(bilhetesParaManter).ToList();

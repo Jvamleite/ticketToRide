@@ -1,5 +1,6 @@
 using TicketToRide.Application.DTOs;
 using TicketToRide.Domain.Enums;
+using TicketToRideAPI.Domain;
 
 namespace TicketToRide.Domain.Entities
 {
@@ -49,7 +50,7 @@ namespace TicketToRide.Domain.Entities
                 Id = Id,
                 Origem = Origem.Nome,
                 Destino = Destino.Nome,
-                Cor = Cor,
+                Cor = Cor.GetEnumDescription(),
                 Tamanho = Tamanho,
                 EhDupla = Dupla,
                 EstaDisponivel = Disponivel,

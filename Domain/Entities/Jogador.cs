@@ -66,12 +66,12 @@ namespace TicketToRide.Domain.Entities
             PecasTremRestante = Math.Max(0, PecasTremRestante - quantidade);
         }
 
-        public void ComprarCartasVeiculo(IEnumerable<CartaVeiculo> cartas)
+        public void AdiconarCartasVeiculo(IEnumerable<CartaVeiculo> cartas)
         {
             MaoCartas.AddRange(cartas);
         }
 
-        public void ComprarBilhetesDestino(IEnumerable<BilheteDestino> bilhetes)
+        public void AdicionarBilhetesDestino(IEnumerable<BilheteDestino> bilhetes)
         {
             BilhetesDestino.AddRange(bilhetes);
         }

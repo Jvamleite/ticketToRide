@@ -39,10 +39,10 @@ namespace TicketToRideAPI.Application.EventHandlers
             foreach (Jogador jogador in partida.Jogadores)
             {
                 List<CartaVeiculo> cartas = partida.BaralhoCartasVeiculo.Comprar(CartasVeiculoIniciaisPorJogador);
-                jogador.ComprarCartasVeiculo(cartas);
+                jogador.AdiconarCartasVeiculo(cartas);
 
                 List<BilheteDestino> bilhetes = partida.BaralhoCartasDestino.Comprar(CartasDestinoIniciaisPorJogador);
-                jogador.ComprarBilhetesDestino(bilhetes);
+                jogador.AdicionarBilhetesDestino(bilhetes);
             }
         }
 

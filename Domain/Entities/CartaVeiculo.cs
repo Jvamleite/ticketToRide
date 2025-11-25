@@ -1,4 +1,5 @@
 using TicketToRide.Domain.Enums;
+using TicketToRideAPI.Application.DTOs;
 using TicketToRideAPI.Domain;
 
 namespace TicketToRide.Domain.Entities
@@ -20,6 +21,15 @@ namespace TicketToRide.Domain.Entities
         public override string ToString()
         {
             return Cor.GetEnumDescription();
+        }
+
+        public CartaVeiculoDTO MapearParaDTO()
+        {
+            return new CartaVeiculoDTO
+            {
+                Nome = Nome,
+                Cor = Cor.GetEnumDescription()
+            };
         }
     }
 }

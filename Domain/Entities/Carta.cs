@@ -4,7 +4,7 @@ namespace TicketToRide.Domain.Entities
 {
     public abstract class Carta
     {
-        private string Nome { get; }
+        protected string Nome { get; }
 
         protected Carta(string nome)
         {
@@ -20,8 +20,7 @@ namespace TicketToRide.Domain.Entities
         {
             return new CartaDTO
             {
-                Nome = Nome,
-                Descricao = ToString()
+                Nome = Nome
             };
         }
     }
