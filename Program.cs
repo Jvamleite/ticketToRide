@@ -1,12 +1,17 @@
+using TicketToRide.API.Filters;
 using TicketToRide.Application.Repositories;
 using TicketToRide.Application.Services;
+using TicketToRide.Application.Services.Interfaces;
 using TicketToRide.Configuration;
 using TicketToRide.Domain.Interfaces;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<DomainExceptionFilter>();
+});
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -25,9 +30,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<IPartidaRepository, PartidaRepositoryMemory>();
 builder.Services.AddEventHandling();
 builder.Services.AddMapper();
-builder.Services.AddScoped<PartidaService>();
-builder.Services.AddScoped<JogadorService>();
-builder.Services.AddScoped<TurnoService>();
+builder.Services.AddScoped<IPartidaService, PartidaService>();
+builder.Services.AddScoped<IJogadorService, JogadorService>();
+builder.Services.AddScoped<ITurnoService, TurnoService>();
 
 WebApplication app = builder.Build();
 

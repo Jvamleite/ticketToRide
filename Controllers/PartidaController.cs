@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using TicketToRide.Application.Services;
 using TicketToRide.Application.DTOs;
+using TicketToRide.Application.Services.Interfaces;
 
 namespace TicketToRide.Controllers
 {
@@ -8,9 +8,9 @@ namespace TicketToRide.Controllers
     [Route("api/[controller]")]
     public class PartidaController : ControllerBase
     {
-        private readonly PartidaService _partidaService;
+        private readonly IPartidaService _partidaService;
 
-        public PartidaController(PartidaService partidaService)
+        public PartidaController(IPartidaService partidaService)
         {
             _partidaService = partidaService;
         }
@@ -18,125 +18,45 @@ namespace TicketToRide.Controllers
         [HttpPost("criar")]
         public ActionResult<PartidaDTO> CriarPartida()
         {
-            try
-            {
-                var partida = _partidaService.CriarPartida();
-                return Ok(partida);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            PartidaDTO partida = _partidaService.CriarPartida();
+            return Ok(partida);
         }
 
         [HttpGet("{id}")]
         public ActionResult<PartidaDTO> ObterPartida(string id)
         {
-            try
-            {
-                var partida = _partidaService.ObterPartida(id);
-                if (partida == null)
-                {
-                    return NotFound(new { message = "Partida não encontrada" });
-                }
-                return Ok(partida);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            PartidaDTO partida = _partidaService.ObterPartida(id);
+
+            return Ok(partida);
         }
 
         [HttpPost("{id}/iniciar")]
         public ActionResult<PartidaDTO> IniciarPartida(string id, [FromBody] IniciarPartidaRequest request)
         {
-            try
-            {
-                var partida = _partidaService.IniciarPartida(id, request.NumJogadores);
-                return Ok(partida);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            PartidaDTO partida = _partidaService.IniciarPartida(id);
+            return Ok(partida);
         }
 
         [HttpPost("{id}/finalizar")]
         public ActionResult<PartidaDTO> FinalizarPartida(string id)
         {
-            try
-            {
-                var partida = _partidaService.FinalizarPartida(id);
-                return Ok(partida);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            PartidaDTO partida = _partidaService.FinalizarPartida(id);
+            return Ok(partida);
         }
 
         [HttpGet("{id}/pontuacao")]
         public ActionResult<object> ObterPontuacao(string id)
         {
-            try
-            {
-                var partida = _partidaService.ObterPartida(id);
-                if (partida == null)
-                {
-                    return NotFound(new { message = "Partida não encontrada" });
-                }
+            PontuacaoDTO pontuacao = _partidaService.ObterPontuacao(id);
 
-                var ranking = partida.Jogadores.OrderByDescending(j => j.Pontuacao).ToList();
-                var vencedor = ranking.FirstOrDefault();
-
-                return Ok(new
-                {
-                    ranking = ranking.Select((j, index) => new
-                    {
-                        posicao = index + 1,
-                        jogador = j.Nome,
-                        pontos = j.Pontuacao,
-                        rotas = j.NumeroRotas,
-                        bilhetes = j.NumeroBilhetes
-                    }),
-                    vencedor = vencedor != null ? new
-                    {
-                        nome = vencedor.Nome,
-                        pontos = vencedor.Pontuacao
-                    } : null
-                });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            return Ok(pontuacao);
         }
 
         [HttpGet]
         public ActionResult<List<PartidaDTO>> ObterTodasPartidas()
         {
-            try
-            {
-                var partidas = _partidaService.ObterTodasPartidas();
-                return Ok(partidas);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            List<PartidaDTO> partidas = _partidaService.ObterTodasPartidas();
+            return Ok(partidas);
         }
-    }
-
-    public class IniciarPartidaRequest
-    {
-        public int NumJogadores { get; set; }
     }
 }

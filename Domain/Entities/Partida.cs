@@ -127,6 +127,26 @@ namespace TicketToRide.Domain.Entities
             AvancarTurno();
         }
 
+        public CartaVeiculo? ComprarCartaRevelada(int indice)
+        {
+            return BaralhoCartasVeiculo.ComprarCartaRevelada(indice);
+        }
+
+        public IEnumerable<CartaVeiculo?> ComprarCartaVeiculo(int num)
+        {
+            return BaralhoCartasVeiculo.Comprar(num);
+        }
+
+        public void DescartarBilhetesNaoEscolhidos(IEnumerable<int> indicesEscolhidos)
+        {
+            BaralhoCartasDestino.DescartarNaoEscolhidas(indicesEscolhidos);
+        }
+
+        public BilheteDestino? ComprarBilheteDestino(int indice)
+        {
+            return BaralhoCartasDestino.ComprarCartaDestino(indice);
+        }
+
         public void Attach(IObserver observer)
         {
             if (!_observadores.Contains(observer))

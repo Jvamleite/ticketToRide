@@ -1,7 +1,7 @@
 ﻿using TicketToRide.Domain.Entities;
 using TicketToRide.Domain.Interfaces;
 
-namespace TicketToRide.Application.EventHandlers
+namespace TicketToRide.Application.Observers
 {
     public class DistribuidorCartasObserver : IObserver
     {

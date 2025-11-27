@@ -72,6 +72,13 @@ namespace TicketToRide.Domain.Entities
                                          && rota.PodeSerConquistadaCom(c));
         }
 
+        public int CalcularPontuacaoTotal()
+        {
+            int pontosRotas = RotasConquistadas.Sum(r => r.CalcularPontos());
+            int pontosBilhetes = BilhetesDestino.Where(b => b.EstaCompleto()).Sum(b => b.Pontos);
+            return pontosRotas + pontosBilhetes;
+        }
+
         public int CalcularComprimentoRotaContinua()
         {
             return RotasConquistadas.Sum(r => r.Tamanho);

@@ -1,12 +1,13 @@
 using TicketToRide.Application.DTOs;
-using TicketToRide.Application.EventHandlers;
+using TicketToRide.Application.Mappers.Interfaces;
+using TicketToRide.Application.Observers;
+using TicketToRide.Application.Services.Interfaces;
 using TicketToRide.Domain.Entities;
 using TicketToRide.Domain.Interfaces;
-using TicketToRide.Application.Mappers.Interfaces;
 
 namespace TicketToRide.Application.Services
 {
-    public class PartidaService
+    public class PartidaService : IPartidaService
     {
         private static int _contadorId = 1;
         private const int MinimoJogadores = 2;
@@ -45,18 +46,20 @@ namespace TicketToRide.Application.Services
             return _mapper.Map<Partida, PartidaDTO>(partida);
         }
 
-        public PartidaDTO? ObterPartida(string id)
+        public PartidaDTO ObterPartida(string id)
         {
-            Partida? partida = _partidaRepository.ObterPartida(id);
+            Partida? partida = _partidaRepository.ObterPartida(id) ?? throw new ArgumentException("Partida não encontrada");
             return _mapper.Map<Partida, PartidaDTO>(partida);
         }
 
-        public PartidaDTO IniciarPartida(string id, int numJogadores)
+        public PartidaDTO IniciarPartida(string id)
         {
             Partida? partida = _partidaRepository.ObterPartida(id) ?? throw new ArgumentException("Partida não encontrada");
 
             if (partida.Jogadores.Count < MinimoJogadores)
+            {
                 throw new ArgumentException($"Partida deve ter no mínimo {MinimoJogadores} jogadores");
+            }
 
             partida.IniciarPartida();
 
@@ -76,6 +79,31 @@ namespace TicketToRide.Application.Services
         {
             List<Partida> partidas = _partidaRepository.ObterTodasPartidas();
             return _mapper.MapList<Partida, PartidaDTO>(partidas);
+        }
+
+        public PontuacaoDTO ObterPontuacao(string partidaId)
+        {
+            PartidaDTO partida = ObterPartida(partidaId);
+
+            List<JogadorDTO> ranking = [.. partida.Jogadores.OrderByDescending(j => j.Pontuacao)];
+            JogadorDTO? vencedor = ranking.FirstOrDefault();
+
+            return new PontuacaoDTO
+            {
+                Ranking = ranking.Select((j, index) => new RankingItemDTO
+                {
+                    Posicao = index + 1,
+                    Jogador = j.Nome,
+                    Pontos = j.Pontuacao,
+                    Rotas = j.NumeroRotas,
+                    Bilhetes = j.NumeroBilhetes
+                }),
+                Vencedor = vencedor != null ? new VencedorDTO
+                {
+                    Nome = vencedor.Nome,
+                    Pontos = vencedor.Pontuacao
+                } : null
+            };
         }
     }
 }

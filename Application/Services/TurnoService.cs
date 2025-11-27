@@ -1,12 +1,13 @@
 using TicketToRide.Application.DTOs;
 using TicketToRide.Application.Mappers.Interfaces;
+using TicketToRide.Application.Services.Interfaces;
 using TicketToRide.Domain.Entities;
 using TicketToRide.Domain.Enums;
 using TicketToRide.Domain.Interfaces;
 
 namespace TicketToRide.Application.Services
 {
-    public class TurnoService
+    public class TurnoService : ITurnoService
     {
         private readonly IPartidaRepository _partidaRepository;
         private readonly IMapper _mapper;
@@ -23,60 +24,50 @@ namespace TicketToRide.Application.Services
         {
             Partida? partida = _partidaRepository.ObterPartida(partidaId) ?? throw new ArgumentException("Partida não encontrada");
 
-            return partida.ObterTurnoAtual() is null ? null : _mapper.Map<Turno, TurnoDTO>(partida.ObterTurnoAtual());
+            return MapearTurnoAtual(partida);
         }
 
-        public TurnoDTO ComprarCartasVeiculo(string partidaId, string jogadorId, List<int> indices = null)
+        public TurnoDTO ComprarCartasVeiculo(string partidaId, string jogadorId, List<int> indicesCartasReveladas = null)
         {
             Partida? partida = _partidaRepository.ObterPartida(partidaId) ?? throw new ArgumentException("Partida não encontrada");
-            if (!partida.Iniciada)
-            {
-                throw new InvalidOperationException("Partida não foi iniciada");
-            }
 
-            if (!partida.EstaNaVezDoJogador(jogadorId))
-            {
-                throw new InvalidOperationException("Não é a vez deste jogador");
-            }
+            ValidarTurnoJogador(jogadorId, partida);
 
             Jogador? jogador = partida.ObterJogador(jogadorId) ?? throw new ArgumentException("Jogador não encontrado");
-            List<CartaVeiculo> cartasCompradas = [];
 
-            if (indices?.Any() == true)
-            {
-                foreach (int indice in indices)
-                {
-                    CartaVeiculo? carta = partida.BaralhoCartasVeiculo.ComprarCartaRevelada(indice);
-                    if (carta != null)
-                    {
-                        cartasCompradas.Add(carta);
-                    }
-                }
-            }
-            else
-            {
-                cartasCompradas = partida.BaralhoCartasVeiculo.Comprar(2);
-            }
+            IEnumerable<CartaVeiculo?> cartasCompradas = ComprarCartas(indicesCartasReveladas, partida);
 
             jogador.AdicionarCartasVeiculo(cartasCompradas);
+
             partida.ExecutarAcaoTurno(Acao.COMPRAR_CARTAS_VEICULO);
 
             _partidaRepository.SalvarPartida(partida);
-            return partida.ObterTurnoAtual() is null ? null : _mapper.Map<Turno, TurnoDTO>(partida.ObterTurnoAtual());
+
+            return MapearTurnoAtual(partida);
+        }
+
+        private static IEnumerable<CartaVeiculo?> ComprarCartas(List<int> indicesCartasReveladas, Partida partida)
+        {
+            if (indicesCartasReveladas?.Any() != true)
+            {
+                return partida.ComprarCartaVeiculo(2);
+            }
+
+            if (indicesCartasReveladas.Count > 2)
+            {
+                throw new InvalidOperationException("Jogador pode comprar no máximo 2 cartas reveladas");
+            }
+
+            return [.. indicesCartasReveladas
+                .Select(i => partida.ComprarCartaRevelada(i))
+                .Where(c => c != null)];
         }
 
         public TurnoDTO ReivindicarRota(string partidaId, string jogadorId, string rotaId)
         {
             Partida? partida = _partidaRepository.ObterPartida(partidaId) ?? throw new ArgumentException("Partida não encontrada");
-            if (!partida.Iniciada)
-            {
-                throw new InvalidOperationException("Partida não foi iniciada");
-            }
 
-            if (!partida.EstaNaVezDoJogador(jogadorId))
-            {
-                throw new InvalidOperationException("Não é a vez deste jogador");
-            }
+            ValidarTurnoJogador(jogadorId, partida);
 
             Jogador? jogador = partida.ObterJogador(jogadorId) ?? throw new ArgumentException("Jogador não encontrado");
 
@@ -102,18 +93,18 @@ namespace TicketToRide.Application.Services
             partida.ExecutarAcaoTurno(Acao.REIVINDICAR_ROTA);
 
             _partidaRepository.SalvarPartida(partida);
-            return partida.ObterTurnoAtual() is null ? null : _mapper.Map<Turno, TurnoDTO>(partida.ObterTurnoAtual());
+
+            return MapearTurnoAtual(partida);
         }
 
         public TurnoDTO ComprarBilhetesDestino(string partidaId, string jogadorId, List<int> bilhetesSelecionados, bool primeiroTurno)
         {
             Partida? partida = _partidaRepository.ObterPartida(partidaId) ?? throw new ArgumentException("Partida não encontrada");
-            if (!partida.EstaNaVezDoJogador(jogadorId))
-            {
-                throw new InvalidOperationException("Não é a vez deste jogador");
-            }
+
+            ValidarTurnoJogador(jogadorId, partida);
 
             Jogador? jogador = partida.ObterJogador(jogadorId) ?? throw new ArgumentException("Jogador não encontrado");
+
             List<BilheteDestino> bilhetesComprados = [];
 
             if (bilhetesSelecionados.Count == 0)
@@ -123,7 +114,7 @@ namespace TicketToRide.Application.Services
 
             foreach (int indice in bilhetesSelecionados)
             {
-                BilheteDestino? carta = partida.BaralhoCartasDestino.ComprarCartaDestino(indice);
+                BilheteDestino? carta = partida.ComprarBilheteDestino(indice);
                 if (carta != null)
                 {
                     bilhetesComprados.Add(carta);
@@ -132,7 +123,7 @@ namespace TicketToRide.Application.Services
 
             jogador.AdicionarBilhetesDestino(bilhetesComprados);
 
-            partida.BaralhoCartasDestino.DescartarNaoEscolhidas(bilhetesSelecionados);
+            partida.DescartarBilhetesNaoEscolhidos(bilhetesSelecionados);
 
             if (!primeiroTurno)
             {
@@ -140,6 +131,24 @@ namespace TicketToRide.Application.Services
             }
 
             _partidaRepository.SalvarPartida(partida);
+            return MapearTurnoAtual(partida);
+        }
+
+        private static void ValidarTurnoJogador(string jogadorId, Partida partida)
+        {
+            if (!partida.Iniciada)
+            {
+                throw new InvalidOperationException("Partida não foi iniciada");
+            }
+
+            if (!partida.EstaNaVezDoJogador(jogadorId))
+            {
+                throw new InvalidOperationException("Não é a vez deste jogador");
+            }
+        }
+
+        private TurnoDTO? MapearTurnoAtual(Partida partida)
+        {
             return partida.ObterTurnoAtual() is null ? null : _mapper.Map<Turno, TurnoDTO>(partida.ObterTurnoAtual());
         }
     }

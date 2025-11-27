@@ -1,16 +1,12 @@
 ﻿using TicketToRide.Domain.Entities;
 using TicketToRide.Domain.Interfaces;
-using TicketToRideAPI.Application.Services;
 
-namespace TicketToRideAPI.Application.EventHandlers
+namespace TicketToRide.Application.EventHandlers
 {
     public class VerificarBilhetesObserver
     {
-        private readonly IPontuacaoService _pontuacaoService;
-
-        public VerificarBilhetesObserver(IPontuacaoService pontuacaoService)
+        public VerificarBilhetesObserver()
         {
-            _pontuacaoService = pontuacaoService;
         }
 
         public void Update(ISubject subject)
@@ -27,7 +23,7 @@ namespace TicketToRideAPI.Application.EventHandlers
             }
         }
 
-        private void VerificarBilhetesCompletos(Jogador jogador)
+        private static void VerificarBilhetesCompletos(Jogador jogador)
         {
             foreach (BilheteDestino bilhete in jogador.BilhetesDestino.Where(x => !x.EstaCompleto()))
             {

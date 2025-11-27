@@ -1,6 +1,5 @@
 ﻿using TicketToRide.Application.EventHandlers;
-using TicketToRideAPI.Application.EventHandlers;
-using TicketToRideAPI.Application.Services;
+using TicketToRide.Application.Observers;
 
 namespace TicketToRide.Configuration
 {
@@ -8,8 +7,6 @@ namespace TicketToRide.Configuration
     {
         public static IServiceCollection AddEventHandling(this IServiceCollection services)
         {
-            services.AddSingleton<IPontuacaoService, PontuacaoService>();
-
             services.AddSingleton<CalculadorPontuacaoObserver>();
             services.AddSingleton<VerificarBilhetesObserver>();
             services.AddSingleton<DistribuidorCartasObserver>();

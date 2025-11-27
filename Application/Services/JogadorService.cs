@@ -1,11 +1,12 @@
 using TicketToRide.Application.DTOs;
 using TicketToRide.Application.Mappers.Interfaces;
+using TicketToRide.Application.Services.Interfaces;
 using TicketToRide.Domain.Entities;
 using TicketToRide.Domain.Interfaces;
 
 namespace TicketToRide.Application.Services
 {
-    public class JogadorService
+    public class JogadorService : IJogadorService
     {
         private readonly IPartidaRepository _partidaRepository;
         private readonly IMapper _mapper;
@@ -24,10 +25,14 @@ namespace TicketToRide.Application.Services
             Partida partida = _partidaRepository.ObterPartida(partidaId) ?? throw new ArgumentException("Partida não encontrada");
 
             if (partida.Jogadores.Count > MaximoJogadores)
+            {
                 throw new ArgumentException($"Partida pode ter no máximo {MaximoJogadores} jogadores");
+            }
 
             if (partida.Iniciada)
+            {
                 throw new ArgumentException("Partida já iniciada");
+            }
 
             string jogadorId = $"JOGADOR_{partida.Jogadores.Count + 1}";
             Jogador jogador = new(jogadorId, nome);
@@ -54,7 +59,7 @@ namespace TicketToRide.Application.Services
                 : [.. partida.Jogadores.Select(x => _mapper.Map<Jogador, JogadorDTO>(x))];
         }
 
-        public bool RemoverJogador(string partidaId, string jogadorId)
+        public void RemoverJogador(string partidaId, string jogadorId)
         {
             Partida? partida = _partidaRepository.ObterPartida(partidaId) ?? throw new ArgumentException("Partida não encontrada");
             if (partida.Iniciada)
@@ -62,17 +67,11 @@ namespace TicketToRide.Application.Services
                 throw new InvalidOperationException("Não é possível remover jogadores após o início da partida");
             }
 
-            Jogador? jogador = partida.ObterJogador(jogadorId);
-            if (jogador == null)
-            {
-                return false;
-            }
+            Jogador? jogador = partida.ObterJogador(jogadorId) ?? throw new ArgumentException("Jogador nao encontrado");
 
             partida.RemoverJogador(jogador);
 
             _partidaRepository.SalvarPartida(partida);
-
-            return true;
         }
 
         public List<JogadorDTO> ObterRanking(string partidaId)
