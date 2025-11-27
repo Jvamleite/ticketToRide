@@ -9,6 +9,6 @@ namespace TicketToRideAPI.Domain.Interfaces
         string Nome { get; }
         int Pontuacao { get; }
         List<Rota> RotasConquistadas { get; }
-        List<BilheteDestino> BilhetesDestino { get; }
+        IReadOnlyList<BilheteDestino> BilhetesDestino { get; }
     }
 }

@@ -1,4 +1,5 @@
 using TicketToRide.Application.DTOs;
+using TicketToRide.Application.Mappers.Interfaces;
 using TicketToRide.Domain.Entities;
 using TicketToRide.Domain.Enums;
 using TicketToRide.Domain.Interfaces;
@@ -8,22 +9,21 @@ namespace TicketToRide.Application.Services
     public class TurnoService
     {
         private readonly IPartidaRepository _partidaRepository;
+        private readonly IMapper _mapper;
 
         public TurnoService(
-            IPartidaRepository partidaRepository)
+            IPartidaRepository partidaRepository,
+            IMapper mapper)
         {
             _partidaRepository = partidaRepository;
+            _mapper = mapper;
         }
 
-        public TurnoDTO ObterTurnoAtual(string partidaId)
+        public TurnoDTO? ObterTurnoAtual(string partidaId)
         {
             Partida? partida = _partidaRepository.ObterPartida(partidaId) ?? throw new ArgumentException("Partida não encontrada");
-            if (partida.TurnoAtual == null)
-            {
-                throw new InvalidOperationException("Não há turno ativo");
-            }
 
-            return partida.TurnoAtual.MapearParaDTO();
+            return partida.ObterTurnoAtual() is null ? null : _mapper.Map<Turno, TurnoDTO>(partida.ObterTurnoAtual());
         }
 
         public TurnoDTO ComprarCartasVeiculo(string partidaId, string jogadorId, List<int> indices = null)
@@ -58,11 +58,11 @@ namespace TicketToRide.Application.Services
                 cartasCompradas = partida.BaralhoCartasVeiculo.Comprar(2);
             }
 
-            jogador.AdiconarCartasVeiculo(cartasCompradas);
+            jogador.AdicionarCartasVeiculo(cartasCompradas);
             partida.ExecutarAcaoTurno(Acao.COMPRAR_CARTAS_VEICULO);
 
             _partidaRepository.SalvarPartida(partida);
-            return partida.TurnoAtual.MapearParaDTO();
+            return partida.ObterTurnoAtual() is null ? null : _mapper.Map<Turno, TurnoDTO>(partida.ObterTurnoAtual());
         }
 
         public TurnoDTO ReivindicarRota(string partidaId, string jogadorId, string rotaId)
@@ -102,7 +102,7 @@ namespace TicketToRide.Application.Services
             partida.ExecutarAcaoTurno(Acao.REIVINDICAR_ROTA);
 
             _partidaRepository.SalvarPartida(partida);
-            return partida.TurnoAtual.MapearParaDTO();
+            return partida.ObterTurnoAtual() is null ? null : _mapper.Map<Turno, TurnoDTO>(partida.ObterTurnoAtual());
         }
 
         public TurnoDTO ComprarBilhetesDestino(string partidaId, string jogadorId, List<int> bilhetesSelecionados, bool primeiroTurno)
@@ -140,7 +140,7 @@ namespace TicketToRide.Application.Services
             }
 
             _partidaRepository.SalvarPartida(partida);
-            return partida.TurnoAtual.MapearParaDTO();
+            return partida.ObterTurnoAtual() is null ? null : _mapper.Map<Turno, TurnoDTO>(partida.ObterTurnoAtual());
         }
     }
 }

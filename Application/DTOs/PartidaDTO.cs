@@ -1,5 +1,3 @@
-using TicketToRideAPI.Application.DTOs;
-
 namespace TicketToRide.Application.DTOs
 {
     public class PartidaDTO
@@ -10,12 +8,9 @@ namespace TicketToRide.Application.DTOs
         public TurnoDTO? TurnoAtual { get; set; }
         public bool PartidaIniciada { get; set; }
         public bool PartidaFinalizada { get; set; }
-        public DateTime DataCriacao { get; set; }
-        public DateTime? DataInicio { get; set; }
-        public DateTime? DataFim { get; set; }
         public int NumeroJogadores { get; set; }
         public bool PodeIniciar { get; set; }
-        public IEnumerable<CartaVeiculoDTO> CartasVisiveis { get; set; }
-        public IEnumerable<BilheteDestinoDTO> OpcoesBilheteDestino { get; set; }
+        public IEnumerable<CartaVeiculoDTO> CartasVisiveis { get; set; } = [];
+        public IEnumerable<BilheteDestinoDTO> OpcoesBilheteDestino { get; set; } = [];
     }
 }

@@ -31,59 +31,42 @@ namespace TicketToRide.Domain.Entities
 
         private bool ExisteCaminho(IEnumerable<Rota> rotas)
         {
-            HashSet<Cidade> visitadas = [];
-            Queue<Cidade> fila = new();
+            var visitadas = new HashSet<Cidade> { Origem };
+            var fila = new Queue<Cidade>();
             fila.Enqueue(Origem);
-            visitadas.Add(Origem);
 
             while (fila.Count > 0)
             {
-                Cidade cidadeAtual = fila.Dequeue();
+                var cidadeAtual = fila.Dequeue();
 
-                foreach (Rota rota in rotas)
-                {
-                    Cidade? proximaCidade = null;
-
-                    if (rota.Origem.Equals(cidadeAtual))
-                    {
-                        proximaCidade = rota.Destino;
-                    }
-                    else if (rota.Destino.Equals(cidadeAtual))
-                    {
-                        proximaCidade = rota.Origem;
-                    }
-
-                    if (proximaCidade != null && !visitadas.Contains(proximaCidade))
-                    {
-                        if (proximaCidade.Equals(Destino))
-                        {
-                            return true;
-                        }
-
-                        visitadas.Add(proximaCidade);
-                        fila.Enqueue(proximaCidade);
-                    }
-                }
+                if (ProcessarVizinhos(rotas, cidadeAtual, visitadas, fila))
+                    return true;
             }
 
+            return false;
+        }
+
+        private bool ProcessarVizinhos(IEnumerable<Rota> rotas, Cidade cidadeAtual,
+            HashSet<Cidade> visitadas, Queue<Cidade> fila)
+        {
+            foreach (var rota in rotas)
+            {
+                var vizinho = rota.ObterCidadeVizinha(cidadeAtual);
+
+                if (vizinho != null && visitadas.Add(vizinho))
+                {
+                    if (vizinho.Equals(Destino))
+                        return true;
+
+                    fila.Enqueue(vizinho);
+                }
+            }
             return false;
         }
 
         public override string ToString()
         {
             return $"{Origem.Nome} → {Destino.Nome} ({Pontos} pontos)";
-        }
-
-        public new BilheteDestinoDTO MapearParaDTO()
-        {
-            return new BilheteDestinoDTO
-            {
-                Origem = Origem.Nome,
-                Destino = Destino.Nome,
-                Pontos = Pontos,
-                IsCompleto = false,
-                Descricao = ToString()
-            };
         }
     }
 }

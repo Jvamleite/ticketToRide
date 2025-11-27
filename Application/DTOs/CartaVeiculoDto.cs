@@ -1,6 +1,6 @@
 ﻿using TicketToRide.Application.DTOs;
 
-namespace TicketToRideAPI.Application.DTOs
+namespace TicketToRide.Application.DTOs
 {
     public class CartaVeiculoDTO : CartaDTO
     {

@@ -2,6 +2,8 @@ namespace TicketToRide.Domain.Entities
 {
     public class BaralhoCartasDestino : Baralho<BilheteDestino>
     {
+        private const int QuantidadeOpcoesSelecionaveis = 3;
+
         public BaralhoCartasDestino(IEnumerable<BilheteDestino> bilhetes)
         {
             InicializarMonteCompra(bilhetes);
@@ -10,7 +12,7 @@ namespace TicketToRide.Domain.Entities
         public IEnumerable<BilheteDestino> ListarOpcoesSelecionaveis()
         {
             List<BilheteDestino> opcoes = [];
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < QuantidadeOpcoesSelecionaveis; i++)
             {
                 opcoes.Add(ObterCartaPorIndice(i));
             }
@@ -20,20 +22,27 @@ namespace TicketToRide.Domain.Entities
 
         public BilheteDestino? ComprarCartaDestino(int indice)
         {
-            if (indice < 0 || indice >= ObterTamanhoMonte())
-            {
-                return null;
-            }
-
             return ComprarCartaPorIndice(indice);
         }
 
-        public void DescartarNaoEscolhidas(IEnumerable<int> indiceCartasEscolhidas)
+        public void DescartarNaoEscolhidas(IEnumerable<int> indicesEscolhidos)
         {
-            foreach (int indice in Enumerable.Range(0, 3).Where(i => !indiceCartasEscolhidas.Contains(i)))
+            foreach (int indice in ObterIndicesNaoEscolhidos(indicesEscolhidos))
             {
-                Descartar(ObterCartaPorIndice(indice));
+                BilheteDestino? carta = ObterCartaPorIndice(indice);
+
+                if (carta is not null)
+                {
+                    Descartar(carta);
+                }
             }
+        }
+
+        private static IEnumerable<int> ObterIndicesNaoEscolhidos(IEnumerable<int> indicesEscolhidos)
+        {
+            HashSet<int> escolhidos = [.. indicesEscolhidos];
+            return Enumerable.Range(0, QuantidadeOpcoesSelecionaveis)
+                             .Where(i => !escolhidos.Contains(i));
         }
     }
 }

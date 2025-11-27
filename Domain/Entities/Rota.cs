@@ -1,11 +1,14 @@
-using TicketToRide.Application.DTOs;
 using TicketToRide.Domain.Enums;
-using TicketToRideAPI.Domain;
 
 namespace TicketToRide.Domain.Entities
 {
     public class Rota
     {
+        private static readonly Dictionary<int, int> PontosPorTamanho = new()
+        {
+            { 1, 1 }, { 2, 2 }, { 3, 4 }, { 4, 7 }, { 5, 10 }, { 6, 15 }
+        };
+
         public string Id { get; }
         public Cidade Origem { get; }
         public Cidade Destino { get; }
@@ -14,48 +17,38 @@ namespace TicketToRide.Domain.Entities
         public bool Dupla { get; }
         public bool Disponivel { get; private set; } = true;
 
-        public Rota(string id, Cidade origem, Cidade destino, Cor cor, int tamanho, bool ehDupla = false)
+        public record RotaConfig(Cidade Origem, Cidade Destino, Cor Cor, int Tamanho, bool EhDupla = false);
+
+        public Rota(string id, RotaConfig config)
         {
             Id = id;
-            Origem = origem;
-            Destino = destino;
-            Cor = cor;
-            Tamanho = tamanho;
-            Dupla = ehDupla;
+            Origem = config.Origem;
+            Destino = config.Destino;
+            Cor = config.Cor;
+            Tamanho = config.Tamanho;
+            Dupla = config.EhDupla;
         }
 
-        public int CalcularPontos()
-        {
-            return Tamanho switch
-            {
-                1 => 1,
-                2 => 2,
-                3 => 4,
-                4 => 7,
-                5 => 10,
-                6 => 15,
-                _ => 0
-            };
-        }
+        public int CalcularPontos() => PontosPorTamanho.GetValueOrDefault(Tamanho, 0);
 
         public bool PodeSerConquistadaCom(CartaVeiculo carta)
         {
             return carta.PodeSerUsadaPara(Cor);
         }
 
-        public RotaDTO MapearParaDTO()
+        public Cidade? ObterCidadeVizinha(Cidade cidade)
         {
-            return new RotaDTO
+            if (Origem.Equals(cidade))
             {
-                Id = Id,
-                Origem = Origem.Nome,
-                Destino = Destino.Nome,
-                Cor = Cor.GetEnumDescription(),
-                Tamanho = Tamanho,
-                EhDupla = Dupla,
-                EstaDisponivel = Disponivel,
-                Pontos = CalcularPontos()
-            };
+                return Destino;
+            }
+
+            if (Destino.Equals(cidade))
+            {
+                return Origem;
+            }
+
+            return null;
         }
 
         public void ConquistarRota()

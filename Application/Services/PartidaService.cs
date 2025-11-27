@@ -2,30 +2,35 @@ using TicketToRide.Application.DTOs;
 using TicketToRide.Application.EventHandlers;
 using TicketToRide.Domain.Entities;
 using TicketToRide.Domain.Interfaces;
+using TicketToRide.Application.Mappers.Interfaces;
 
 namespace TicketToRide.Application.Services
 {
     public class PartidaService
     {
         private static int _contadorId = 1;
+        private const int MinimoJogadores = 2;
 
         private readonly IPartidaRepository _partidaRepository;
+        private readonly IMapper _mapper;
         private readonly DistribuidorCartasObserver _distribuidorCartasObserver;
         private readonly CalculadorPontuacaoObserver _calculadorPontuacaoObserver;
 
         public PartidaService(
             IPartidaRepository partidaRepository,
+            IMapper mapper,
             DistribuidorCartasObserver distribuidorCartasObserver,
             CalculadorPontuacaoObserver calculadorPontuacaoObserver)
         {
             _partidaRepository = partidaRepository;
+            _mapper = mapper;
             _distribuidorCartasObserver = distribuidorCartasObserver;
             _calculadorPontuacaoObserver = calculadorPontuacaoObserver;
         }
 
         public PartidaDTO CriarPartida()
         {
-            Partida partida = new(
+            Partida partida = Partida.CriarPartida(
                 $"PARTIDA-{_contadorId++}",
                 new Tabuleiro(DadosJogo.ObterRotas()),
                 new BaralhoCartasDestino(DadosJogo.ObterBilhetesDestino()),
@@ -37,35 +42,40 @@ namespace TicketToRide.Application.Services
 
             _partidaRepository.SalvarPartida(partida);
 
-            return partida.MapearParaDTO();
+            return _mapper.Map<Partida, PartidaDTO>(partida);
         }
 
         public PartidaDTO? ObterPartida(string id)
         {
             Partida? partida = _partidaRepository.ObterPartida(id);
-            return partida?.MapearParaDTO();
+            return _mapper.Map<Partida, PartidaDTO>(partida);
         }
 
         public PartidaDTO IniciarPartida(string id, int numJogadores)
         {
             Partida? partida = _partidaRepository.ObterPartida(id) ?? throw new ArgumentException("Partida não encontrada");
 
-            partida.IniciarPartida(numJogadores);
+            if (partida.Jogadores.Count < MinimoJogadores)
+                throw new ArgumentException($"Partida deve ter no mínimo {MinimoJogadores} jogadores");
 
-            return partida.MapearParaDTO();
+            partida.IniciarPartida();
+
+            return _mapper.Map<Partida, PartidaDTO>(partida);
         }
 
         public PartidaDTO FinalizarPartida(string id)
         {
             Partida? partida = _partidaRepository.ObterPartida(id) ?? throw new ArgumentException("Partida não encontrada");
 
-            return partida.MapearParaDTO();
+            partida.FinalizarPartida();
+
+            return _mapper.Map<Partida, PartidaDTO>(partida);
         }
 
         public List<PartidaDTO> ObterTodasPartidas()
         {
             List<Partida> partidas = _partidaRepository.ObterTodasPartidas();
-            return partidas.ConvertAll(p => p.MapearParaDTO());
+            return _mapper.MapList<Partida, PartidaDTO>(partidas);
         }
     }
 }

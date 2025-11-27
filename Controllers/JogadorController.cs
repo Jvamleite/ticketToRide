@@ -104,6 +104,6 @@ namespace TicketToRide.Controllers
 
     public class AdicionarJogadorRequest
     {
-        public string Nome { get; set; } = string.Empty;
+        public string Nome { get; set; }
     }
 }

@@ -37,7 +37,7 @@ namespace TicketToRide.Application.EventHandlers
             foreach (Jogador jogador in partida.Jogadores)
             {
                 List<CartaVeiculo> cartas = partida.BaralhoCartasVeiculo.Comprar(CartasVeiculoIniciaisPorJogador);
-                jogador.AdiconarCartasVeiculo(cartas);
+                jogador.AdicionarCartasVeiculo(cartas);
                 Console.WriteLine($"    - Jogador '{jogador.Nome}' recebeu {CartasVeiculoIniciaisPorJogador} cartas");
             }
         }

@@ -1,5 +1,3 @@
-using TicketToRide.Application.DTOs;
-
 namespace TicketToRide.Domain.Entities
 {
     public abstract class Carta
@@ -14,14 +12,6 @@ namespace TicketToRide.Domain.Entities
         public override string ToString()
         {
             return Nome;
-        }
-
-        public CartaDTO MapearParaDTO()
-        {
-            return new CartaDTO
-            {
-                Nome = Nome
-            };
         }
     }
 }

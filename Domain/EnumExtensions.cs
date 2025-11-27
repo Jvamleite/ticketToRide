@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace TicketToRideAPI.Domain
+namespace TicketToRide.Domain
 {
     public static class EnumExtensions
     {

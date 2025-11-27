@@ -1,5 +1,3 @@
-using TicketToRideAPI.Application.DTOs;
-
 namespace TicketToRide.Application.DTOs
 {
     public class JogadorDTO

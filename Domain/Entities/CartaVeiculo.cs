@@ -1,6 +1,4 @@
 using TicketToRide.Domain.Enums;
-using TicketToRideAPI.Application.DTOs;
-using TicketToRideAPI.Domain;
 
 namespace TicketToRide.Domain.Entities
 {
@@ -16,20 +14,6 @@ namespace TicketToRide.Domain.Entities
         public bool PodeSerUsadaPara(Cor corRota)
         {
             return Cor == Cor.LOCOMOTIVA || Cor == corRota;
-        }
-
-        public override string ToString()
-        {
-            return Cor.GetEnumDescription();
-        }
-
-        public new CartaVeiculoDTO MapearParaDTO()
-        {
-            return new CartaVeiculoDTO
-            {
-                Nome = Nome,
-                Cor = Cor.GetEnumDescription()
-            };
         }
     }
 }

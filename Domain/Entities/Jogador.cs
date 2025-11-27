@@ -1,4 +1,3 @@
-using TicketToRide.Application.DTOs;
 using TicketToRide.Domain.Enums;
 using TicketToRide.Domain.Interfaces;
 using TicketToRideAPI.Domain.Interfaces;
@@ -7,12 +6,17 @@ namespace TicketToRide.Domain.Entities
 {
     public class Jogador : IJogadorSubject
     {
+        private const int QuantidadeInicialPecasTrem = 45;
+        private List<CartaVeiculo> maoCartas = [];
+        private List<BilheteDestino> bilhetesDestino = [];
+
         public string Id { get; }
         public string Nome { get; }
         public int Pontuacao { get; private set; } = 0;
-        private int PecasTremRestante { get; set; } = 45;
-        private List<CartaVeiculo> MaoCartas { get; } = [];
-        public List<BilheteDestino> BilhetesDestino { get; } = [];
+        public int PecasTremRestante { get; private set; } = QuantidadeInicialPecasTrem;
+
+        public IReadOnlyList<CartaVeiculo> MaoCartas => maoCartas.AsReadOnly();
+        public IReadOnlyList<BilheteDestino> BilhetesDestino => bilhetesDestino.AsReadOnly();
         public List<Rota> RotasConquistadas { get; } = [];
 
         private List<IObserver> _observers = [];
@@ -38,17 +42,22 @@ namespace TicketToRide.Domain.Entities
             this.Notify();
         }
 
-        public bool TemPecasSuficientesParaConquistarRota(Rota rota)
-        {
-            return PecasTremRestante >= rota.Tamanho;
-        }
-
         private void RemoverCartasDaMao(List<CartaVeiculo> cartasUsadas)
         {
             foreach (CartaVeiculo carta in cartasUsadas)
             {
-                MaoCartas.Remove(carta);
+                maoCartas.Remove(carta);
             }
+        }
+
+        private void RemoverPecasTrem(int quantidade)
+        {
+            PecasTremRestante = Math.Max(0, PecasTremRestante - quantidade);
+        }
+
+        public bool TemPecasSuficientesParaConquistarRota(Rota rota)
+        {
+            return PecasTremRestante >= rota.Tamanho;
         }
 
         public bool TemCartasSuficientesParaConquistarRota(Rota rota)
@@ -65,24 +74,24 @@ namespace TicketToRide.Domain.Entities
 
         public int CalcularComprimentoRotaContinua()
         {
-            // Implementar algoritmo para encontrar a rota contínua mais longa
-            // Por simplicidade, retornar a soma de todas as rotas por enquanto
             return RotasConquistadas.Sum(r => r.Tamanho);
         }
 
-        private void RemoverPecasTrem(int quantidade)
+        public void AdicionarCartasVeiculo(IEnumerable<CartaVeiculo> cartas)
         {
-            PecasTremRestante = Math.Max(0, PecasTremRestante - quantidade);
-        }
-
-        public void AdiconarCartasVeiculo(IEnumerable<CartaVeiculo> cartas)
-        {
-            MaoCartas.AddRange(cartas);
+            maoCartas.AddRange(cartas);
         }
 
         public void AdicionarBilhetesDestino(IEnumerable<BilheteDestino> bilhetes)
         {
-            BilhetesDestino.AddRange(bilhetes);
+            bilhetesDestino.AddRange(bilhetes);
+        }
+
+        private List<CartaVeiculo> SelecionarCartasParaRota(Rota rota)
+        {
+            List<CartaVeiculo> cartasDisponiveis = ObterCartasParaCor(rota.Cor);
+            (List<CartaVeiculo> locomotivas, List<CartaVeiculo> cartasNormais) = SepararPorTipo(cartasDisponiveis);
+            return MontarSelecao(rota.Tamanho, cartasNormais, locomotivas);
         }
 
         private List<CartaVeiculo> ObterCartasParaCor(Cor cor)
@@ -90,48 +99,24 @@ namespace TicketToRide.Domain.Entities
             return [.. MaoCartas.Where(c => c.PodeSerUsadaPara(cor))];
         }
 
-        private List<CartaVeiculo> SelecionarCartasParaRota(Rota rota)
+        private static (List<CartaVeiculo> locomotivas, List<CartaVeiculo> normais) SepararPorTipo(List<CartaVeiculo> cartas)
         {
-            List<CartaVeiculo> cartasSelecionadas = [];
-            List<CartaVeiculo> cartasDisponiveis = ObterCartasParaCor(rota.Cor);
+            List<CartaVeiculo> locomotivas = cartas.Where(c => c.Cor == Cor.LOCOMOTIVA).ToList();
+            List<CartaVeiculo> normais = cartas.Except(locomotivas).ToList();
+            return (locomotivas, normais);
+        }
 
-            List<CartaVeiculo> locomotivas = [.. cartasDisponiveis.Where(c => c.Cor == Cor.LOCOMOTIVA)];
-            List<CartaVeiculo> cartasNormais = [.. cartasDisponiveis.Except(locomotivas)];
-
-            for (int i = 0; i < Math.Min(rota.Tamanho, cartasNormais.Count); i++)
-            {
-                cartasSelecionadas.Add(cartasNormais[i]);
-            }
-
-            int cartasFaltando = rota.Tamanho - cartasSelecionadas.Count;
-            for (int i = 0; i < Math.Min(cartasFaltando, locomotivas.Count); i++)
-            {
-                cartasSelecionadas.Add(locomotivas[i]);
-            }
-
-            return cartasSelecionadas;
+        private static List<CartaVeiculo> MontarSelecao(int tamanhoRota, List<CartaVeiculo> normais, List<CartaVeiculo> locomotivas)
+        {
+            List<CartaVeiculo> selecionadas = normais.Take(tamanhoRota).ToList();
+            int faltando = tamanhoRota - selecionadas.Count;
+            selecionadas.AddRange(locomotivas.Take(faltando));
+            return selecionadas;
         }
 
         public void AdicionarPontuacao(int pontos)
         {
             Pontuacao += pontos;
-        }
-
-        public JogadorDTO MapearJogadorParaDTO()
-        {
-            return new JogadorDTO
-            {
-                Id = Id,
-                Nome = Nome,
-                Pontuacao = Pontuacao,
-                PecasTremRestante = PecasTremRestante,
-                MaoCartas = MaoCartas.ConvertAll(c => c.MapearParaDTO()),
-                BilhetesDestino = BilhetesDestino.ConvertAll(b => b.MapearParaDTO()),
-                RotasConquistadas = RotasConquistadas.ConvertAll(r => r.MapearParaDTO()),
-                NumeroCartas = MaoCartas.Count,
-                NumeroBilhetes = BilhetesDestino.Count,
-                NumeroRotas = RotasConquistadas.Count
-            };
         }
 
         public void Attach(IObserver observer)

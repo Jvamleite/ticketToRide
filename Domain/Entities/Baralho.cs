@@ -2,6 +2,13 @@ namespace TicketToRide.Domain.Entities
 {
     public abstract class Baralho<T> where T : Carta
     {
+        private readonly Random _random;
+
+        protected Baralho(Random? random = null)
+        {
+            _random = random ?? new Random();
+        }
+
         private List<T> MonteCompra { get; } = [];
         private List<T> MonteDescarte { get; } = [];
 
@@ -23,7 +30,7 @@ namespace TicketToRide.Domain.Entities
 
         protected T? ComprarCartaPorIndice(int indice)
         {
-            if (indice < 0 || indice >= MonteCompra.Count)
+            if (!IndiceValido(indice))
             {
                 return null;
             }
@@ -35,13 +42,15 @@ namespace TicketToRide.Domain.Entities
 
         protected T? ObterCartaPorIndice(int indice)
         {
-            if (indice < 0 || indice >= MonteCompra.Count)
+            if (!IndiceValido(indice))
             {
                 return null;
             }
 
             return MonteCompra[indice];
         }
+
+        private bool IndiceValido(int indice) => indice >= 0 && indice < MonteCompra.Count;
 
         public List<T> Comprar(int quantidade)
         {
@@ -63,26 +72,42 @@ namespace TicketToRide.Domain.Entities
 
         private T? Comprar()
         {
-            if (!TemCarta())
+            if (!TentarComprarCartasDisponiveis())
             {
-                if (MonteDescarte.Count > 0)
-                {
-                    Embaralhar();
-                }
-                else
-                {
-                    return null;
-                }
+                return null;
             }
 
+            return RemoverPrimeiraCarta();
+        }
+
+        private bool TentarComprarCartasDisponiveis()
+        {
+            if (TemCarta())
+            {
+                return true;
+            }
+
+            if (!TemCartaNoDescarte())
+            {
+                return false;
+            }
+
+            Embaralhar();
+            return true;
+        }
+
+        private bool TemCartaNoDescarte() => MonteDescarte.Count > 0;
+
+        private T RemoverPrimeiraCarta()
+        {
             T carta = MonteCompra[0];
             MonteCompra.RemoveAt(0);
             return carta;
         }
 
-        public void Descartar(IEnumerable<T> carta)
+        public void Descartar(IEnumerable<T> cartas)
         {
-            MonteDescarte.AddRange(carta);
+            MonteDescarte.AddRange(cartas);
         }
 
         public void Descartar(T carta)
@@ -104,10 +129,9 @@ namespace TicketToRide.Domain.Entities
 
         private void EmbaralharCartas()
         {
-            Random random = new();
             for (int i = MonteCompra.Count - 1; i > 0; i--)
             {
-                int j = random.Next(i + 1);
+                int j = _random.Next(i + 1);
                 (MonteCompra[i], MonteCompra[j]) = (MonteCompra[j], MonteCompra[i]);
             }
         }

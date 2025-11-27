@@ -2,11 +2,12 @@ namespace TicketToRide.Domain.Entities
 {
     public class Tabuleiro
     {
-        public List<Rota> Rotas { get; } = [];
+        private readonly List<Rota> rotas = [];
+        public IReadOnlyList<Rota> Rotas => rotas.AsReadOnly();
 
         public Tabuleiro(IEnumerable<Rota> rotas)
         {
-            Rotas.AddRange(rotas);
+            this.rotas.AddRange(rotas);
         }
 
         public Rota? ObterRotaPorId(string idRota)

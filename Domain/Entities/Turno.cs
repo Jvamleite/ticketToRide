@@ -1,4 +1,3 @@
-using TicketToRide.Application.DTOs;
 using TicketToRide.Domain.Enums;
 
 namespace TicketToRide.Domain.Entities
@@ -6,7 +5,7 @@ namespace TicketToRide.Domain.Entities
     public class Turno
     {
         public int Numero { get; }
-        private Jogador JogadorAtual { get; }
+        public Jogador JogadorAtual { get; }
         public Acao? AcaoRealizada { get; private set; }
         public bool AcaoCompletada => AcaoRealizada is not null;
 
@@ -24,24 +23,6 @@ namespace TicketToRide.Domain.Entities
         public bool PodeExecutarAcao()
         {
             return !AcaoCompletada;
-        }
-
-        public Jogador ObterJogadorAtual()
-        {
-            return JogadorAtual;
-        }
-
-        public TurnoDTO MapearParaDTO()
-        {
-            return new TurnoDTO
-            {
-                Numero = Numero,
-                JogadorId = JogadorAtual.Id,
-                JogadorNome = JogadorAtual.Nome,
-                AcaoRealizada = AcaoRealizada,
-                AcaoCompletada = AcaoCompletada,
-                PodeExecutarAcao = PodeExecutarAcao()
-            };
         }
     }
 }
