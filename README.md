@@ -153,11 +153,10 @@ TicketToRideAPI/
 
 1. **Clonar o repositório:**
    ```bash
-   git clone <url-do-repositorio>
+   git clone https://github.com/Jvamleite/ticketToRide.git
    cd TicketToRideAPI
 
 2. **Restaurar dependências e compilar:**
-  Primeiro tem que buildar
    ```bash
    dotnet restore
    ```
