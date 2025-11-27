@@ -1,6 +1,7 @@
 # Ticket to Ride - Jogo Digital Completo
 
-Este projeto implementa uma versão digital e simplificada do jogo de tabuleiro "Ticket to Ride" usando ASP.NET Core Web API como backend e JavaScript com Bootstrap como frontend.
+Este projeto implementa uma versão digital e simplificada do jogo de tabuleiro Ticket to Ride como Trabalho Final da disciplina de Projeto de Software.
+A aplicação utiliza ASP.NET Core 9.0 Web API como backend e HTML, CSS e JavaScript (sem frameworks) com Bootstrap no frontend, seguindo os princípios de Clean Architecture (camadas Domain, Application e API).
 
 ## 🚀 Tecnologias Utilizadas
 
@@ -9,60 +10,117 @@ Este projeto implementa uma versão digital e simplificada do jogo de tabuleiro 
 - **UI Framework**: Bootstrap 5.3.0
 - **Ícones**: Font Awesome 6.0.0
 - **Arquitetura**: Clean Architecture (Domain, Application, API)
-- **Persistência**: Em memória (Dictionary estático)
+- **Persistência**: Persistência: armazenamento em memória utilizando um Dictionary estático (sem banco de dados externo)
+- **Padrões**: DTOs, Services, Repository, Observer, Mappers (Mapeamento entre Domain e DTOs)
 
 ## 📁 Estrutura do Projeto
 
 ```
-TicketToRide Project/
-├── Domain/                    # Camada de Domínio
-│   ├── Entities/             # Entidades do jogo
-│   │   ├── Partida.cs
-│   │   ├── Jogador.cs
-│   │   ├── Tabuleiro.cs
-│   │   ├── Rota.cs
-│   │   ├── Cidade.cs
-│   │   ├── Turno.cs
+TicketToRideAPI/
+├── Connected Services/
+├── Dependências/
+├── Properties/
+├── wwwroot/
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   ├── app.js
+│   │   ├── jogo.js
+│   │   └── partida.js
+│   ├── default.html
+│   └── index.html
+│
+├── Application/
+│   ├── DTOs/
+│   │   ├── Request/
+│   │   │   ├── AdicionarJogadorRequest.cs
+│   │   │   ├── ComprarBilhetesRequest.cs
+│   │   │   ├── ComprarCartasRequest.cs
+│   │   │   ├── IniciarPartidaRequest.cs
+│   │   │   ├── PassarTurnoRequest.cs
+│   │   │   └── ReivindicarRotaRequest.cs
+│   │   ├── BilheteDestinoDTO.cs
+│   │   ├── CartaDTO.cs
+│   │   ├── CartaVeiculoDto.cs
+│   │   ├── JogadorDTO.cs
+│   │   ├── PartidaDTO.cs
+│   │   ├── PontuacaoDTO.cs
+│   │   ├── RotaDTO.cs
+│   │   └── TurnoDTO.cs
+│   │
+│   ├── Mappers/
+│   │   ├── Interfaces/
+│   │   │   └── IMapper.cs
+│   │   ├── BilheteDestinoMapper.cs
+│   │   ├── CartaVeiculoMapper.cs
+│   │   ├── CompositeMapper.cs
+│   │   ├── JogadorMapper.cs
+│   │   ├── PartidaMapper.cs
+│   │   ├── RotaMapper.cs
+│   │   └── TurnoMapper.cs
+│   │
+│   ├── Observers/
+│   │   ├── CalculadorPontuacaoObserver.cs
+│   │   ├── DistribuidorCartasObserver.cs
+│   │   └── VerificarBilhetesObserver.cs
+│   │
+│   ├── Services/ orquestram regras de negócio e chamadas ao domínio.
+│   │   ├── Interfaces/
+│   │   │   ├── IJogadorService.cs
+│   │   │   ├── IPartidaService.cs
+│   │   │   └── ITurnoService.cs
+│   │   ├── JogadorService.cs
+│   │   ├── PartidaService.cs
+│   │   └── TurnoService.cs
+│   │
+│   ├── DadosJogo.cs
+│   ├── Configuration/
+│   │   ├── MapperConfiguration.cs
+│   │   └── ObserverConfiguration.cs
+│   │
+│   └── Controllers/ expõem os endpoints REST
+│       ├── JogadorController.cs
+│       ├── PartidaController.cs
+│       └── TurnoController.cs
+│
+├── Domain/
+│   ├── Entities/ representam os conceitos do jogo (Jogador, Rota, Partida, etc.).
+│   │   ├── Baralho.cs
+│   │   ├── BaralhoCartasDestino.cs
+│   │   ├── BaralhoCartasVeiculo.cs
+│   │   ├── BilheteDestino.cs
 │   │   ├── Carta.cs
 │   │   ├── CartaVeiculo.cs
-│   │   ├── BilheteDestino.cs
-│   │   ├── Baralho.cs
-│   │   ├── BaralhoCartasVeiculo.cs
-│   │   └── BaralhoCartasDestino.cs
+│   │   ├── Cidade.cs
+│   │   ├── Jogador.cs
+│   │   ├── Partida.cs
+│   │   ├── Rota.cs
+│   │   ├── Tabuleiro.cs
+│   │   └── Turno.cs
+│   │
 │   ├── Enums/
 │   │   ├── Acao.cs
 │   │   └── Cor.cs
-│   └── Interfaces/
-│       └── IPartidaRepository.cs
-├── Application/              # Camada de Aplicação
-│   ├── Services/
-│   │   ├── PartidaService.cs
-│   │   ├── JogadorService.cs
-│   │   └── TurnoService.cs
-│   ├── DTOs/
-│   │   ├── PartidaDTO.cs
-│   │   ├── JogadorDTO.cs
-│   │   ├── RotaDTO.cs
-│   │   ├── CartaDTO.cs
-│   │   ├── BilheteDestinoDTO.cs
-│   │   └── TurnoDTO.cs
-│   ├── Repositories/
-│   │   └── PartidaRepositoryMemory.cs
-│   └── DadosJogo.cs         # Dados hardcoded do jogo
-├── Controllers/             # Camada de API
-│   ├── PartidaController.cs
-│   ├── JogadorController.cs
-│   └── TurnoController.cs
-├── wwwroot/                 # Frontend
-│   ├── index.html
-│   ├── default.html
-│   ├── css/style.css
-│   └── js/
-│       ├── app.js
-│       ├── partida.js
-│       └── jogo.js
-├── Program.cs
-└── TicketToRideAPI.csproj
+│   │
+│   ├── Interfaces/
+│   │   ├── IJogadorSubject.cs
+│   │   ├── IPartidaRepository.cs
+│   │   ├── IPartidaSubject.cs
+│   │   └── ISubject.cs
+│   │
+│   └── EnumExtensions.cs
+│
+├── Filters/
+│   └── DomainExceptionFilter.cs
+│
+├── Infrastructure/
+│   └── Repositories/ implementação do repositório de partidas em memória.
+│       └── PartidaRepositoryMemory.cs
+│
+├── .gitignore
+├── appsettings.json
+├── LICENSE
+└── Program.cs
 ```
 
 ## 🎮 Funcionalidades Implementadas
@@ -80,41 +138,47 @@ TicketToRide Project/
 
 ### ✅ Requisitos Não-Funcionais Atendidos
 
-- **RNF01**: Desempenho < 3 segundos (em memória é instantâneo)
+- **RNF01**: Desempenho < 3 segundos
 - **RNF02**: Interface intuitiva com representação visual
 - **RNF03**: Regras oficiais aplicadas consistentemente
-- **RNF04**: Suporta até 5 jogadores sem perda de performance
+- **RNF04**: Suporte a até 5 jogadores simultâneos sem degradação perceptível de performance.
 
 ## 🛠️ Como Executar
 
 ### Pré-requisitos
-- .NET 9.0 SDK (já instalado: versão 9.0.305)
-- Navegador web moderno
+- [.NET 9.0 SDK](https://dotnet.microsoft.com/)
+- Navegador web moderno (Chrome, Edge, Firefox, etc.)
 
 ### Passos para Executar
 
-1. **Navegue até o diretório do projeto:**
+1. **Clonar o repositório:**
    ```bash
-   cd "...\TicketToRide Project"
-   ```
+   git clone <url-do-repositorio>
+   cd TicketToRideAPI
 
-2. **Execute o projeto:**
+2. **Restaurar dependências e compilar:**
   Primeiro tem que buildar
+   ```bash
+   dotnet restore
+   ```
    ```bash
    dotnet build
    ```
+3. **Executar a aplicação:**
    ```bash
    dotnet run
    ```
 
-3. **Acesse a aplicação:**
-   - **Frontend**: https://localhost:5257
-   - **API**: https://localhost:7000/api/partida ou http://localhost:5000/api/partida
+4. **Acessar a aplicação:**
+   - **Interface do jogo (frontend)**: https://localhost:5257
+   - **API REST** (exemplos):
+     - https://localhost:7000/api/partida
+     - http://localhost:5000/api/partida
 
 ## 🎯 Como Jogar
 
 ### 1. Configuração da Partida
-- Adicione entre 2 e 5 jogadores
+- Adicione entre 2 a 5 jogadores
 - Cada jogador deve ter um nome único
 - Clique em "Iniciar Partida" quando estiver pronto
 
@@ -174,15 +238,3 @@ Se as portas estiverem ocupadas, edite `Properties/launchSettings.json`
 
 ### CORS Issues
 O CORS está configurado para localhost:3000 e 127.0.0.1:3000
-
-## 🎉 Status do Projeto
-
-✅ **COMPLETO** - O jogo está totalmente funcional com:
-- Backend ASP.NET Core com Clean Architecture
-- Frontend JavaScript responsivo
-- Todas as regras do Ticket to Ride implementadas
-- Interface intuitiva e moderna
-- Sistema de pontuação completo
-- Gerenciamento de partidas multijogador
-
-O projeto está pronto para jogar! 🚂🎮
