@@ -1,9 +1,9 @@
 using TicketToRide.API.Filters;
-using TicketToRide.Application.Repositories;
 using TicketToRide.Application.Services;
 using TicketToRide.Application.Services.Interfaces;
 using TicketToRide.Configuration;
 using TicketToRide.Domain.Interfaces;
+using TicketToRide.Infracstruture.Repositories;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
